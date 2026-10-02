@@ -338,7 +338,7 @@
     byId('feedForm').reset();
     byId('feedError').textContent = '';
     var date = entry ? new Date(entry.at) : new Date();
-    byId('amountInput').value = entry ? entry.amount : '';
+    byId('amountInput').value = entry ? entry.amount : 120;
     byId('monthInput').value = String(date.getMonth() + 1);
     byId('dayInput').value = String(date.getDate());
     byId('timeInput').value = formatTime(date.getTime());
