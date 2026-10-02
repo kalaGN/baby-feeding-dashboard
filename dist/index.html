@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=32">
+  <link rel="stylesheet" href="./style.css?v=33">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -58,7 +58,7 @@
     </section>
 
     <section class="bottom-panel" aria-labelledby="historyHeading">
-      <div class="bottom-heading"><h1 id="historyHeading">今日记录</h1><button class="add-button" id="addButton" type="button"><span aria-hidden="true">＋</span> 记录喝奶</button></div>
+      <div class="bottom-heading"><h1 id="historyHeading">今日记录</h1><button class="add-button" id="addButton" type="button" aria-label="记录喝奶"><span aria-hidden="true">＋</span></button></div>
       <div class="history" id="history"><p class="empty-history">今天还没有喝奶记录</p></div>
     </section>
     <p id="runtimeStatus" class="runtime-status" role="alert"></p>
@@ -115,6 +115,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=32"></script>
+  <script src="./app.js?v=33"></script>
 </body>
 </html>

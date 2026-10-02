@@ -125,3 +125,6 @@ html.night{color:#edf3e8;background:#0e1714}
 #intervalValue{font-size:36px}
 #intervalDialog label{font-size:20px}
 #intervalDialog .submit-button{font-size:22px}
+
+.add-button{width:48px;height:48px;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
+.add-button span{font-size:32px;line-height:1;margin:0;vertical-align:baseline}
