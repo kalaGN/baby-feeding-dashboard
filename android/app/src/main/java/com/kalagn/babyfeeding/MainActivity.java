@@ -3,7 +3,9 @@ package com.kalagn.babyfeeding;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.view.Gravity;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONObject;
@@ -57,19 +59,23 @@ public class MainActivity extends Activity {
                 view.evaluateJavascript("(function(){var b=document.getElementById('fullscreenButton');if(b)b.style.display='none';var f=document.querySelector('.footer span');if(f)f.textContent='记录保存在这台平板，无需电脑或网络';}())", null);
             }
         });
-        Button migrate = new Button(this);
-        migrate.setText("旧记录"); migrate.setTextSize(14);
-        migrate.setContentDescription("确认后导入旧服务器记录"); migrate.setAlpha(.8f);
-        migrate.setOnClickListener(v -> importServer());
-        FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(dp(80), dp(48), Gravity.BOTTOM | Gravity.END);
-        layout.setMargins(0, 0, dp(8), dp(4)); root.addView(migrate, layout);
+        ImageButton settingsButton = new ImageButton(this);
+        settingsButton.setImageResource(R.drawable.ic_settings);
+        settingsButton.setContentDescription("设置");
+        settingsButton.setPadding(dp(12), dp(12), dp(12), dp(12));
+        android.util.TypedValue background = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, background, true);
+        settingsButton.setBackgroundResource(background.resourceId);
+        settingsButton.setOnClickListener(v -> showSettingsMenu());
+        FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(dp(48), dp(48), Gravity.BOTTOM | Gravity.END);
+        layout.setMargins(0, 0, dp(12), dp(8)); root.addView(settingsButton, layout);
         setContentView(root);
         enterFullscreen(); loadBoard();
         android.content.SharedPreferences preferences = getSharedPreferences("dashboard", MODE_PRIVATE);
         if (savedInstanceState == null && preferences.contains("server") && !preferences.getBoolean("migrationPromptShown", false)) {
             preferences.edit().putBoolean("migrationPromptShown", true).apply();
             new AlertDialog.Builder(this).setTitle("导入旧记录？")
-                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后点击右下角“旧记录”。")
+                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后在右下角齿轮菜单中选择“导入旧记录”。")
                 .setPositiveButton("读取旧记录", (d, which) -> importServer()).setNegativeButton("暂不导入", null).show();
         }
     }
@@ -105,6 +111,22 @@ public class MainActivity extends Activity {
     private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=26"); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
+    private void showSettingsMenu() {
+        new AlertDialog.Builder(this).setTitle("设置")
+            .setItems(new String[]{"关于", "服务地址", "导入旧记录"}, (dialog, item) -> {
+                if (item == 0) showAbout();
+                if (item == 1) showServerAddress(false);
+                if (item == 2) importServer();
+            }).setNegativeButton("关闭", null).show();
+    }
+    private void showAbout() {
+        String version;
+        try { version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+        catch (android.content.pm.PackageManager.NameNotFoundException error) { version = "未知"; }
+        new AlertDialog.Builder(this).setTitle("关于喝奶看板")
+            .setMessage("版本 " + version + "\n\n平板独立版：页面与记录保存在平板，日常使用无需电脑或网络。\n\n支持大字号时钟、喝奶记录、间隔设置、前台自动记录和夜间模式。\n\n开源协议：MIT\nGitHub：kalaGN/baby-feeding-dashboard")
+            .setPositiveButton("知道了", null).show();
+    }
     private void confirmImport(JSONObject state) throws Exception {
         int count = state.getJSONArray("entries").length();
         new AlertDialog.Builder(this).setTitle("确认导入 " + count + " 条旧记录？")
@@ -116,11 +138,18 @@ public class MainActivity extends Activity {
                 } catch (Exception error) { message("导入失败，原记录仍保留，请检查存储空间"); }
             }).setNegativeButton("取消", null).show();
     }
-    private void importServer() {
+    private void importServer() { showServerAddress(true); }
+    private void showServerAddress(boolean readAfterSave) {
         EditText input = new EditText(this); input.setTextSize(22); input.setSingleLine(true);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
         input.setText(getSharedPreferences("dashboard", MODE_PRIVATE).getString("server", "http://192.168.0.104:4173"));
-        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("旧电脑服务地址").setView(input)
-            .setPositiveButton("读取", null).setNegativeButton("取消", null).create();
+        LinearLayout form = new LinearLayout(this); form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(dp(24), dp(12), dp(24), 0);
+        TextView explanation = new TextView(this); explanation.setTextSize(18);
+        explanation.setText("服务地址仅用于读取旧电脑记录，日常离线使用无需连接。");
+        form.addView(explanation); form.addView(input);
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("服务地址").setView(form)
+            .setPositiveButton(readAfterSave ? "读取旧记录" : "保存", null).setNegativeButton("取消", null).create();
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String address = input.getText().toString().trim().replaceAll("/+$", "");
             Uri uri = Uri.parse(address);
@@ -129,19 +158,24 @@ public class MainActivity extends Activity {
                 || address.matches(".*\\s.*") || uri.getPort() == 0 || uri.getPort() > 65535) {
                 input.setError("请输入 http:// 或 https:// 服务器地址"); return;
             }
-            dialog.dismiss(); message("正在读取旧记录…");
-            new Thread(() -> {
-                HttpURLConnection connection = null;
-                try {
-                    connection = (HttpURLConnection) new URL(address + "/api/state").openConnection();
-                    connection.setConnectTimeout(8000); connection.setReadTimeout(8000); connection.setInstanceFollowRedirects(false);
-                    if (connection.getResponseCode() != 200) throw new IOException("服务器未返回记录");
-                    JSONObject state = StateStore.parseImport(StateStore.read(connection.getInputStream()));
-                    runOnUiThread(() -> { if (!isFinishing()) try { confirmImport(state); } catch (Exception error) { message("记录格式无效"); } });
-                } catch (Exception error) { runOnUiThread(() -> { if (!isFinishing()) message("无法读取旧电脑记录，请确认地址和 Wi-Fi"); }); }
-                finally { if (connection != null) connection.disconnect(); }
-            }, "ImportRecords").start();
+            getSharedPreferences("dashboard", MODE_PRIVATE).edit().putString("server", address).apply();
+            dialog.dismiss();
+            if (readAfterSave) readOldRecords(address); else message("服务地址已保存");
         })); dialog.show();
+    }
+    private void readOldRecords(String address) {
+        message("正在读取旧记录…");
+        new Thread(() -> {
+            HttpURLConnection connection = null;
+            try {
+                connection = (HttpURLConnection) new URL(address + "/api/state").openConnection();
+                connection.setConnectTimeout(8000); connection.setReadTimeout(8000); connection.setInstanceFollowRedirects(false);
+                if (connection.getResponseCode() != 200) throw new IOException("服务器未返回记录");
+                JSONObject state = StateStore.parseImport(StateStore.read(connection.getInputStream()));
+                runOnUiThread(() -> { if (!isFinishing()) try { confirmImport(state); } catch (Exception error) { message("记录格式无效"); } });
+            } catch (Exception error) { runOnUiThread(() -> { if (!isFinishing()) message("无法读取旧电脑记录，请确认地址和 Wi-Fi"); }); }
+            finally { if (connection != null) connection.disconnect(); }
+        }, "ImportRecords").start();
     }
     private void enterFullscreen() {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN
