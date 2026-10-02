@@ -9,7 +9,7 @@
 3. 打开“喝奶看板”，填写电脑服务器地址，例如 `http://192.168.0.104:4173`。
 4. 平板和电脑连接同一个 Wi-Fi。右下角“设置”可修改服务器地址。
 
-如果电脑的 `artifacts/` 目录中已放入 `baby-feeding-dashboard-1.0.0.apk`，也可以在平板浏览器打开 `http://<电脑的局域网 IP>:4173/downloads/baby-feeding-dashboard.apk` 直接下载安装包。
+如果电脑的 `artifacts/` 目录中已放入 `baby-feeding-dashboard-1.0.1.apk`，也可以在平板浏览器打开 `http://<电脑的局域网 IP>:4173/downloads/baby-feeding-dashboard.apk` 直接下载安装包。
 
 这是服务器连接版，网页和记录由电脑服务提供。启动应用需要能访问服务器；应用在前台时自动记录，退出或切到后台后暂停计时。
 
@@ -50,7 +50,7 @@ cp signing.properties.example signing.properties
 
 输出文件：`app/build/outputs/apk/release/app-release.apk`。后续更新需要使用同一签名密钥，并增加 `versionCode`。密钥、密码和构建产物均不提交到 GitHub。
 
-将发布 APK 复制到项目根目录下的 `artifacts/baby-feeding-dashboard-1.0.0.apk`，服务器即可提供上述局域网下载地址。
+将发布 APK 复制到项目根目录下的 `artifacts/baby-feeding-dashboard-1.0.1.apk`，服务器即可提供上述局域网下载地址。
 
 ## 权限
 

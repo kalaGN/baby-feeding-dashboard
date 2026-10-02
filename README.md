@@ -60,7 +60,7 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 
 提供 Android WebView 应用项目，支持 Android 6.0 及以上版本。应用默认横屏、全屏并保持屏幕常亮，通过可配置的服务器地址读取看板和保存记录。电脑仍需运行服务。
 
-安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
+从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
 
 ### 记录喝奶
 
