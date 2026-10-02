@@ -110,16 +110,16 @@ public class MainActivity extends Activity {
     private WebResourceResponse blocked() {
         return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
     }
-    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=26"); }
+    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=27"); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
     private void showSettingsMenu() {
         new AlertDialog.Builder(this).setTitle("设置")
-            .setItems(new String[]{"关于", "服务地址", "导入旧记录", "检查更新"}, (dialog, item) -> {
-                if (item == 0) showAbout();
-                if (item == 1) showServerAddress(false);
-                if (item == 2) importServer();
-                if (item == 3) updater.check(true);
+            .setItems(new String[]{"服务地址", "导入旧记录", "检查更新", "关于"}, (dialog, item) -> {
+                if (item == 0) showServerAddress(false);
+                if (item == 1) importServer();
+                if (item == 2) updater.check(true);
+                if (item == 3) showAbout();
             }).setNegativeButton("关闭", null).show();
     }
     private void showAbout() {

@@ -7,7 +7,7 @@
 1. 将 APK 下载到平板，打开文件安装。系统提示时允许该下载工具或文件管理器安装应用。
 2. 打开“喝奶看板”即可使用，不用启动电脑服务或填写服务器地址。
 3. 页面内置于安装包，新增、编辑、删除及设置间隔都可离线完成。
-4. 右下角齿轮打开设置菜单，包含“关于”“服务地址”“导入旧记录”“检查更新”。服务地址可保存，仅用于旧记录迁移。
+4. 右下角齿轮打开设置菜单，包含“服务地址”“导入旧记录”“检查更新”“关于”，关于位于最下面。服务地址可保存，仅用于旧记录迁移。
 
 记录保存在应用私有目录的 `state.json`，WebView 也保留暂存副本。应用重开后继续读取本地记录。卸载应用或清除应用数据会删除记录；当前版本不提供通用导入、导出功能。
 
@@ -62,7 +62,7 @@ cp signing.properties.example signing.properties
 
 在 `signing.properties` 中填写密码后打包。更新必须使用同一密钥并增加 `versionCode`，才能覆盖安装。密钥、密码和构建产物不提交到 GitHub。
 
-将发布包放到项目根目录的 `artifacts/baby-feeding-dashboard-1.1.2.apk`，电脑服务即可提供 `/downloads/baby-feeding-dashboard.apk` 下载。
+将发布包放到项目根目录的 `artifacts/baby-feeding-dashboard-1.1.3.apk`，电脑服务即可提供 `/downloads/baby-feeding-dashboard.apk` 下载。
 
 ## 实现与权限
 

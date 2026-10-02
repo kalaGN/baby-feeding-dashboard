@@ -36,8 +36,8 @@ html.night{color:#edf3e8;background:#0e1714}
 .night .dialog input:focus{outline-color:#4b7052;border-color:#a0c9a5}
 .night .runtime-status{background:#51352f;color:#ffd5c6}
 
-.entry{min-width:220px}
-.entry-edit{display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left}
+.entry{min-width:198px;flex:0 0 198px}
+.entry-edit{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left}
 .entry-edit-hint{margin-left:auto;color:#78947d;font-size:12px;white-space:nowrap}
 .entry-edit:focus{outline:2px solid #83ae89;outline-offset:3px;border-radius:5px}
 .entry .delete-entry{margin-left:0}
@@ -54,7 +54,7 @@ html.night{color:#edf3e8;background:#0e1714}
 .bottom-heading h1{font-size:20px;margin:0}
 .add-button{padding:10px 18px;font-size:16px}
 .history{margin-top:10px}
-.entry{padding:9px 11px}
+.entry{padding:9px 11px;gap:8px}
 @media(max-width:600px){.bottom-panel{padding:12px 15px 9px}.bottom-heading h1{font-size:18px}.add-button{padding:10px 12px;font-size:14px}}
 
 /* Give the scheduled time more room than the daily summary. */
