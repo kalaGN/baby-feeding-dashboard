@@ -1,0 +1,4 @@
+storeFile=board-release.jks
+storePassword=replace-with-your-keystore-password
+keyAlias=baby-feeding-dashboard
+keyPassword=replace-with-your-key-password

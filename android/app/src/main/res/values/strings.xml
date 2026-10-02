@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="server_description">填写运行看板服务的电脑地址，例如 http://192.168.0.104:4173。记录继续保存在电脑上。</string>
+</resources>

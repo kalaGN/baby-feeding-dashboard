@@ -84,6 +84,20 @@ async function jsonBody(request) {
 
 const server = http.createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname;
+  if (path === '/downloads/baby-feeding-dashboard.apk' && request.method === 'GET') {
+    try {
+      const apk = await readFile(join(base, 'artifacts', 'baby-feeding-dashboard-1.0.0.apk'));
+      response.writeHead(200, {
+        'Content-Type': 'application/vnd.android.package-archive',
+        'Content-Disposition': 'attachment; filename="baby-feeding-dashboard-1.0.0.apk"',
+        'Content-Length': apk.length,
+        'Cache-Control': 'no-cache',
+      }).end(apk);
+    } catch (error) {
+      response.writeHead(error.code === 'ENOENT' ? 404 : 500).end('APK unavailable');
+    }
+    return;
+  }
   if (path === '/api/state') {
     if (request.method === 'GET') {
       reply(response, 200, { initialized: stored.revision > 0, revision: stored.revision, state: stored.state });

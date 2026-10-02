@@ -1,3 +1,10 @@
 .DS_Store
 showcaseapp-presenter-video/
 data/
+.local/
+artifacts/
+android/.gradle/
+android/**/build/
+android/local.properties
+android/signing.properties
+android/*.jks

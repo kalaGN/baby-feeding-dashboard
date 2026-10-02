@@ -56,6 +56,12 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 
 ## 使用说明
 
+### Android 安装版
+
+提供 Android WebView 应用项目，支持 Android 6.0 及以上版本。应用默认横屏、全屏并保持屏幕常亮，通过可配置的服务器地址读取看板和保存记录。电脑仍需运行服务。
+
+安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
+
 ### 记录喝奶
 
 - **新增**：点击“记录喝奶”，选择月、日和时分后保存。奶量默认 **120 ml**，可手动修改，无需选择年份。
@@ -106,6 +112,7 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 
 ```text
 baby-feeding-dashboard/
+├── android/                    # Android 应用与 APK 构建配置
 ├── dist/                       # 网页、样式、脚本及应用图标
 ├── docs/images/                # README 展示图片
 ├── tests/                      # 记录逻辑与服务器持久化测试
