@@ -20,7 +20,7 @@
 
 ## Android 安装版
 
-提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，默认横屏、全屏并保持屏幕常亮；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
+提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，手机和平板默认横屏，全屏并保持屏幕常亮；手机横屏使用紧凑布局，弹窗可滚动；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
 
 从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
 

@@ -150,3 +150,48 @@ html.night{color:#edf3e8;background:#0e1714}
 .night .stats-summary strong{color:#86bdf2}
 .night .stats-note,.night .stats-bar-date{color:#a0b4a8}
 @media(max-width:600px){.stats-summary{gap:16px}.stats-summary strong{font-size:30px}.stats-summary>div{display:block}.stats-summary span{margin-right:6px}}
+
+/* Phone layouts: compact overview, readable form fields, scrollable dialogs. */
+.dialog{max-height:calc(100vh - 24px);overflow-y:auto}
+@media(max-width:600px){
+  .board{padding:14px 14px 68px;gap:12px}
+  .topbar{flex-wrap:wrap;gap:8px}.brand{gap:8px;font-size:18px}.top-actions{gap:6px}
+  .hero-panel{min-height:220px;padding:22px}
+  .clock{font-size:clamp(82px,26vw,145px);margin:12px 0 20px}
+  .hero-bottom{gap:8px 12px}.hero-bottom .last-feed{font-size:28px}
+  .side-column{gap:12px}.next-panel{min-height:150px;padding:20px 22px}
+  .next-feed-time{font-size:clamp(76px,23vw,124px);margin:0 0 18px}
+  .today-panel{padding:14px 18px}.today-stats{margin:12px 0 0}
+  .today-stats strong{font-size:42px}.today-stats>div:not(.stat-divider){gap:4px}
+  .dialog{width:calc(100vw - 24px);padding:20px;border-radius:22px}
+  #feedDialog{padding:20px}.feed-date-time{grid-template-columns:1fr 1fr;gap:0 12px}
+  #feedDialog select{height:54px;font-size:24px}
+  #feedDialog label{margin:10px 0 6px;font-size:18px}
+  #feedDialog .submit-button{padding:13px;font-size:20px}
+  .dialog h2{font-size:24px}.dialog-heading{margin-bottom:14px}
+  .interval-wheels{gap:16px}#intervalValue{font-size:30px}
+  #statsDialog{padding:20px}.stats-summary>div{flex:1}
+  .footer{font-size:11px}.entry{flex-basis:178px;min-width:178px}
+}
+@media(max-width:360px){.today-date{font-size:11px}.brand{font-size:16px}.brand-mark{width:28px;height:28px}.top-actions .icon-button{width:32px;height:32px}.hero-bottom .small-label{font-size:14px}.hero-bottom .last-detail{font-size:13px}.today-stats strong{font-size:36px}}
+
+/* Landscape phones have tablet-like columns and much less vertical space. */
+@media(orientation:landscape) and (max-height:500px) and (min-width:601px){
+  .board{padding:10px 16px 58px;gap:10px}
+  .topbar{min-height:34px}.brand{font-size:18px}.brand-mark{width:28px;height:28px}
+  .top-actions{gap:10px}.icon-button{width:34px;height:34px}.today-date{font-size:12px}
+  .main-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;flex:none}
+  .hero-panel{min-height:220px;padding:20px}
+  .clock{font-size:clamp(120px,20vw,170px);line-height:1;margin:8px 0 auto}
+  .hero-rule{margin:10px 0}.hero-bottom{gap:7px 10px}
+  .hero-bottom .small-label,.hero-bottom .last-detail{font-size:13px}.hero-bottom .last-feed{font-size:26px}
+  .side-column{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) 94px;gap:10px}
+  .next-panel{min-height:0;padding:14px 18px}.next-feed-time{font-size:clamp(68px,10vw,92px);margin:auto 0 12px}
+  .interval-row{font-size:12px;padding-top:10px}.today-panel{min-height:0;padding:10px 16px}
+  .today-stats{display:flex;margin:6px 0 0}.today-stats>div:not(.stat-divider){margin-top:0;gap:4px}.today-stats strong{font-size:34px}.today-stats span{font-size:11px}
+  .stat-divider{display:block;height:26px}.bottom-panel{min-height:0;padding:10px 16px}.bottom-heading h1{font-size:18px}
+  .add-button{width:40px;height:40px}.add-button span{font-size:28px}.history{margin-top:8px}
+  .dialog{max-height:calc(100vh - 16px);padding:20px}
+  #feedDialog{padding:20px}.feed-date-time{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #statsDialog{padding:20px}.stats-summary{margin:10px 0}.stats-bar-track{height:100px}
+}
