@@ -77,7 +77,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
   vm.runInNewContext(source, {
     Date: FakeDate, Math, JSON, Object, String, Number, isFinite,
     document, localStorage, window, navigator: {}, location: { protocol: 'file:' }, XMLHttpRequest: native ? undefined : XMLHttpRequest,
-    setInterval(fn) { intervalTick = fn; }, setTimeout() {},
+    setInterval(fn) { intervalTick = fn; }, setTimeout() {}, clearTimeout() {},
     alert(message) { throw new Error(message); }, confirm() { return true; },
   });
   return {
@@ -90,6 +90,8 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     set(id, value) { elements[id].value = String(value); },
     submit(id) { elements[id].listeners.submit({ preventDefault() {} }); },
     input(id) { elements[id].listeners.input(); },
+    scrollAmount(top) { elements.amountWheel.scrollTop=top;elements.amountWheel.listeners.scroll(); },
+    amountKey(key) { elements.amountWheel.listeners.keydown({key,preventDefault() {}}); },
     reload(time) { return start(this.state(), time); },
   };
 }
@@ -220,7 +222,7 @@ test('独立 APK 无网络接口仍可新增编辑并自动保存', () => {
 });
 
 
-test('奶量滑块默认120，实时显示并保存10与300边界，拒绝非10ml档位', () => {
+test('奶量滚动选择默认120，实时显示并保存10与300边界，拒绝非10ml档位', () => {
   const seed={intervalHours:null,intervalStartedAt:null,entries:[]};
   const app=start(seed,at(12));
   app.click('addButton'); assert.equal(app.text('amountValue'),'120');
@@ -232,4 +234,15 @@ test('奶量滑块默认120，实时显示并保存10与300边界，拒绝非10m
     app.click('addButton');app.set('amountInput',amount);app.submit('feedForm');
     assert.equal(app.remote().entries.length,1);assert.ok(app.text('feedError'));
   }
+});
+
+
+test('上下滚动与上下键按10ml选择，首尾保持10与300', () => {
+  const app=start({intervalHours:null,intervalStartedAt:null,entries:[]},at(12));
+  app.click('addButton'); app.amountKey('ArrowDown'); assert.equal(app.text('amountValue'),'130');
+  app.amountKey('ArrowUp'); assert.equal(app.text('amountValue'),'120');
+  app.scrollAmount(48*14); assert.equal(app.text('amountValue'),'150');
+  app.amountKey('Home'); app.amountKey('ArrowUp'); assert.equal(app.text('amountValue'),'10');
+  app.amountKey('End'); app.amountKey('ArrowDown'); assert.equal(app.text('amountValue'),'300');
+  app.submit('feedForm'); assert.equal(app.remote().entries[0].amount,300);
 });

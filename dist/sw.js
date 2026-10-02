@@ -1,5 +1,5 @@
-const CACHE = 'milk-board-v28';
-const ASSETS = ['./', './index.html', './style.css?v=28', './app.js?v=28', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+const CACHE = 'milk-board-v29';
+const ASSETS = ['./', './index.html', './style.css?v=29', './app.js?v=29', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

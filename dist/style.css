@@ -103,20 +103,18 @@ html.night{color:#edf3e8;background:#0e1714}
 .night #feedDialog select{background:#27392e;border-color:#55715c;color:#f2f5e9}
 @media(max-width:420px){.feed-date-time{grid-template-columns:1fr 1fr}.feed-time-field{grid-column:1 / -1}}
 
-/* Milk amount is selected by sliding, with a large live value. */
+/* Vertical milk amount wheel: the middle row is the selected amount. */
 .amount-readout{display:flex;align-items:baseline;justify-content:center;gap:8px;color:#438edb}
-.amount-readout output{font-size:48px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.amount-readout output{font-size:44px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
 .amount-readout span{font-size:22px}
-#feedDialog .amount-slider{width:100%;height:64px;padding:0;border:0;border-radius:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
-#feedDialog .amount-slider::-webkit-slider-runnable-track{height:10px;border-radius:6px;background:#b7d5ef}
-#feedDialog .amount-slider::-webkit-slider-thumb{-webkit-appearance:none;width:36px;height:36px;margin-top:-13px;border:4px solid #fffdfa;border-radius:50%;background:#438edb;box-shadow:0 2px 6px #23578b44}
-#feedDialog .amount-slider::-moz-range-track{height:10px;border-radius:6px;background:#b7d5ef}
-#feedDialog .amount-slider::-moz-range-thumb{width:28px;height:28px;border:4px solid #fffdfa;border-radius:50%;background:#438edb}
-.amount-scale{display:flex;justify-content:space-between;margin-top:-8px;color:#748277;font-size:16px}
-.night .amount-readout{color:#86bdf2}
-.night .amount-scale{color:#b2c8b6}
-.night #feedDialog .amount-slider{background:transparent}
-.night #feedDialog .amount-slider::-webkit-slider-runnable-track{background:#415a70}
-.night #feedDialog .amount-slider::-webkit-slider-thumb{border-color:#1c2924;background:#86bdf2}
-.night #feedDialog .amount-slider::-moz-range-track{background:#415a70}
-.night #feedDialog .amount-slider::-moz-range-thumb{border-color:#1c2924;background:#86bdf2}
+.amount-wheel-frame{position:relative;width:180px;margin:8px auto 10px}
+.amount-wheel{height:144px;overflow-y:auto;padding:48px 0;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior:contain;position:relative;border-radius:14px}
+.amount-wheel::-webkit-scrollbar{display:none}
+.amount-wheel:focus{outline:2px solid #b7d5ef;outline-offset:3px}
+.amount-wheel-highlight{position:absolute;top:48px;left:0;right:0;height:48px;border-top:2px solid #b7d5ef;border-bottom:2px solid #b7d5ef;background:#438edb0d;pointer-events:none;border-radius:6px}
+.amount-option{height:48px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;scroll-snap-stop:always;font-size:26px;color:#899ba9;cursor:pointer;user-select:none}
+.amount-option.selected{font-size:34px;font-weight:700;color:#438edb}
+.night .amount-readout,.night .amount-option.selected{color:#86bdf2}
+.night .amount-option{color:#9badb9}
+.night .amount-wheel-highlight{border-color:#557894;background:#86bdf216}
+.night .amount-wheel:focus{outline-color:#557894}

@@ -341,11 +341,54 @@
     else dialog.removeAttribute('open');
   }
 
+  var amountOptions = [];
+  var amountWheel = byId('amountWheel');
+  var amountRowHeight = 48;
+  var amountSnapTimer = null;
   function showSelectedAmount() {
     var value = Number(byId('amountInput').value);
     byId('amountValue').textContent = String(value);
-    byId('amountInput').setAttribute('aria-valuetext', value + ' 毫升');
+    amountWheel.setAttribute('aria-activedescendant', 'amount-option-' + value);
+    for (var a = 0; a < amountOptions.length; a++) {
+      var selected = (a + 1) * 10 === value;
+      amountOptions[a].className = selected ? 'amount-option selected' : 'amount-option';
+      amountOptions[a].setAttribute('aria-selected', selected ? 'true' : 'false');
+    }
   }
+  function selectAmount(value, scroll) {
+    value = Math.max(10, Math.min(300, Math.round(value / 10) * 10));
+    byId('amountInput').value = value;
+    showSelectedAmount();
+    if (scroll) amountWheel.scrollTop = (value / 10 - 1) * amountRowHeight;
+  }
+  for (var amountChoice = 10; amountChoice <= 300; amountChoice += 10) {
+    (function (value) {
+      var option = textElement('div', 'amount-option', String(value));
+      option.id = 'amount-option-' + value;
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-label', value + ' 毫升');
+      option.addEventListener('click', function () { selectAmount(value, true); });
+      amountWheel.appendChild(option);
+      amountOptions.push(option);
+    }(amountChoice));
+  }
+  amountWheel.addEventListener('scroll', function () {
+    selectAmount((Math.round(amountWheel.scrollTop / amountRowHeight) + 1) * 10, false);
+    if (amountSnapTimer !== null) clearTimeout(amountSnapTimer);
+    amountSnapTimer = setTimeout(function () {
+      amountSnapTimer = null;
+      selectAmount(Number(byId('amountInput').value), true);
+    }, 120);
+  });
+  amountWheel.addEventListener('keydown', function (event) {
+    var value = Number(byId('amountInput').value);
+    if (event.key === 'ArrowUp') value -= 10;
+    else if (event.key === 'ArrowDown') value += 10;
+    else if (event.key === 'Home') value = 10;
+    else if (event.key === 'End') value = 300;
+    else return;
+    event.preventDefault(); selectAmount(value, true);
+  });
   byId('amountInput').addEventListener('input', showSelectedAmount);
   byId('amountInput').addEventListener('change', showSelectedAmount);
   function openFeedDialog(entry) {
@@ -361,7 +404,8 @@
     byId('feedDialogEyebrow').textContent = entry ? '编辑记录' : '添加记录';
     byId('feedSubmitButton').textContent = entry ? '保存修改' : '保存记录';
     openDialog('feedDialog');
-    byId('amountInput').focus();
+    selectAmount(Number(byId('amountInput').value), true);
+    amountWheel.focus();
   }
   byId('addButton').addEventListener('click', function () {
     if (!serverReady) return;
