@@ -2,7 +2,7 @@
 
 为平板横屏桌面设计的喝奶记录看板。大字号展示当前时间、上次与下次喝奶时间，支持记录管理、自动记录和夜间模式。
 
-采用原生 HTML、CSS、JavaScript 和 Node.js，无第三方运行依赖。记录保存在运行服务的电脑上，平板浏览器保留同步副本。
+采用原生 HTML、CSS、JavaScript 和 Node.js，无第三方运行依赖。网页版记录保存在运行服务的电脑上，平板浏览器保留同步副本；Android 独立版记录保存在平板。
 
 ## 功能
 
@@ -58,7 +58,7 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 
 ### Android 安装版
 
-提供 Android WebView 应用项目，支持 Android 6.0 及以上版本。应用默认横屏、全屏并保持屏幕常亮，通过可配置的服务器地址读取看板和保存记录。电脑仍需运行服务。
+提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，默认横屏、全屏并保持屏幕常亮；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
 
 从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
 

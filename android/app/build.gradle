@@ -16,8 +16,8 @@ android {
         applicationId 'com.kalagn.babyfeeding'
         minSdk 23
         targetSdk 35
-        versionCode 2
-        versionName '1.0.1'
+        versionCode 3
+        versionName '1.1.0'
     }
 
     signingConfigs {
@@ -41,4 +41,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+// Bundle the same dashboard files used by the desktop server.
+def bundleBoard = tasks.register('bundleBoard', Sync) {
+    from rootProject.file('../dist')
+    into layout.buildDirectory.dir('generated/boardAssets/board')
+    exclude 'sw.js'
+}
+android.sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/boardAssets'))
+tasks.named('preBuild').configure { dependsOn bundleBoard }
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
 }

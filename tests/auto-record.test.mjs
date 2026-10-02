@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
 const at = (hour, minute = 0) => new Date(2026, 8, 27, hour, minute).getTime();
 
-function start(seed, initialNow, remote = { revision: 0, state: null }, localSync = {}) {
+function start(seed, initialNow, remote = { revision: 0, state: null }, localSync = {}, native = false) {
   let now = initialNow;
   let intervalTick;
   const data = { 'milk-board-v1': JSON.stringify(seed) };
@@ -64,9 +64,19 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     }
   }
   const window = { addEventListener() {} };
+  if (native) window.AndroidStore = {
+    request(method, payload) {
+      if (method === 'PUT') {
+        const submitted = JSON.parse(payload);
+        if (submitted.revision !== remote.revision) return JSON.stringify({status:409,body:remote});
+        remote.state = submitted.state; remote.revision++;
+      }
+      return JSON.stringify({status:200,body:{initialized:remote.revision > 0,...remote}});
+    },
+  };
   vm.runInNewContext(source, {
     Date: FakeDate, Math, JSON, Object, String, Number, isFinite,
-    document, localStorage, window, navigator: {}, location: { protocol: 'file:' }, XMLHttpRequest,
+    document, localStorage, window, navigator: {}, location: { protocol: 'file:' }, XMLHttpRequest: native ? undefined : XMLHttpRequest,
     setInterval(fn) { intervalTick = fn; }, setTimeout() {},
     alert(message) { throw new Error(message); }, confirm() { return true; },
   });
@@ -191,4 +201,19 @@ test('服务器已写入但平板丢失确认时，内容相同可自动恢复�
   assert.equal(app.text('runtimeStatus'), '');
   assert.equal(app.state().entries[0].id, 'saved');
   assert.equal(remote.revision, 2);
+});
+
+
+test('独立 APK 无网络接口仍可新增编辑并自动保存', () => {
+  const empty = {intervalHours:null,intervalStartedAt:null,entries:[]};
+  const app = start(empty, at(12), {revision:0,state:empty}, {}, true);
+  app.click('addButton');
+  app.submit('feedForm');
+  assert.equal(app.remote().entries.length,1);
+  assert.equal(app.remote().entries[0].amount,120);
+  app.editFirstEntry();
+  app.set('amountInput',150);
+  app.submit('feedForm');
+  assert.equal(app.remote().entries[0].amount,150);
+  assert.equal(app.text('runtimeStatus'),'');
 });

@@ -29,10 +29,20 @@
 - `dist/style.css`：横屏优先布局与窄屏适配。
 - `dist/app.js`：状态、服务器同步、渲染和事件。
 - `server.mjs`：静态资源、状态接口及文件持久化；`data/state.json` 是不入库的数据文件。
-- `dist/sw.js`、`dist/manifest.webmanifest`、`dist/icon.svg`、`dist/icon-*.png`：离线安装支持。
+- `dist/sw.js`、`dist/manifest.webmanifest`、`dist/icon-*.png`：离线安装支持。
 
 使用小函数和普通 DOM API，所有显示内容从状态重新计算。例如 `formatTime(entry.at)` 返回给界面使用的本地时间字符串。
 
 ## 验证与边界
 
 始终校验时间、奶量与间隔输入；展示用户数据时使用 `textContent`。不添加外部依赖，不向第三方上传记录。修改数据结构时兼容现有记录。服务工作线程在普通 `file://` 页面不可用，需通过 HTTP(S) 打开。
+
+## Android 独立版 v1.1.0
+
+- APK 包含 dist 页面，使用受限的内部 HTTPS 地址；外部网页不能进入带存储桥接的 WebView。
+- 原生 StateStore 接管 GET/PUT 状态协议，写入应用私有 state.json，写入失败不更新内存状态。保留 revision 冲突校验。
+- 当前版本不实现通用导入、导出。支持从旧电脑服务读取记录，展示条数并明确确认后才导入；电脑原记录保留，替换前保留平板旧文件。
+- 网络权限仅用于用户主动读取旧记录，正常启动和记录无需网络。
+- 前台自动记录，后台/关闭错过的时段不补记。夜间模式、横屏、全屏和常亮保留。
+- 使用原签名、提高版本号覆盖更新，不清理旧 WebView 数据。卸载或清除应用数据会删除私有记录。
+- 验证：Node 业务测试、Java StateStore 持久化/校验测试、APK 构建、Lint 与签名检查。实机安装单独说明验证情况。
