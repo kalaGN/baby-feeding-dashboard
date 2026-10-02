@@ -316,7 +316,7 @@
     byId('lastDetail').textContent = last ? last.amount + ' ml · ' + (sameLocalDay(last.at, now) ? '今天' : formatDate(new Date(last.at))) : '记录第一笔后显示奶量';
     byId('todayTotal').textContent = String(total);
     byId('todayCount').textContent = String(today.length);
-    byId('intervalText').textContent = state.intervalHours ? state.intervalHours + ' 小时' : '设置间隔';
+    byId('intervalText').textContent = state.intervalHours ? formatInterval(state.intervalHours) : '设置间隔';
 
     if (!state.intervalHours || (!last && !state.intervalStartedAt)) {
       byId('nextFeedTime').textContent = '--:--';
@@ -411,12 +411,60 @@
     if (!serverReady) return;
     openFeedDialog(null);
   });
+  function formatInterval(hours) {
+    var minutes = Math.round(hours * 60);
+    return Math.floor(minutes / 60) + '小时' + (minutes % 60) + '分钟';
+  }
+  var intervalWheel = byId('intervalWheel');
+  var intervalOptions = [];
+  var intervalSnapTimer = null;
+  function selectInterval(tenths, scroll) {
+    tenths = Math.max(5, Math.min(240, Math.round(tenths)));
+    var hours = tenths / 10;
+    byId('intervalInput').value = hours;
+    byId('intervalValue').textContent = formatInterval(hours);
+    intervalWheel.setAttribute('aria-activedescendant', 'interval-option-' + tenths);
+    for (var i = 0; i < intervalOptions.length; i++) {
+      var selected = i + 5 === tenths;
+      intervalOptions[i].className = selected ? 'amount-option selected' : 'amount-option';
+      intervalOptions[i].setAttribute('aria-selected', selected ? 'true' : 'false');
+    }
+    if (scroll) intervalWheel.scrollTop = (tenths - 5) * amountRowHeight;
+  }
+  for (var intervalChoice = 5; intervalChoice <= 240; intervalChoice++) {
+    (function (tenths) {
+      var option = textElement('div', 'amount-option', formatInterval(tenths / 10));
+      option.id = 'interval-option-' + tenths;
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-label', formatInterval(tenths / 10));
+      option.addEventListener('click', function () { selectInterval(tenths, true); });
+      intervalWheel.appendChild(option);
+      intervalOptions.push(option);
+    }(intervalChoice));
+  }
+  intervalWheel.addEventListener('scroll', function () {
+    selectInterval(Math.round(intervalWheel.scrollTop / amountRowHeight) + 5, false);
+    if (intervalSnapTimer !== null) clearTimeout(intervalSnapTimer);
+    intervalSnapTimer = setTimeout(function () {
+      intervalSnapTimer = null;
+      selectInterval(Number(byId('intervalInput').value) * 10, true);
+    }, 120);
+  });
+  intervalWheel.addEventListener('keydown', function (event) {
+    var value = Math.round(Number(byId('intervalInput').value) * 10);
+    if (event.key === 'ArrowUp') value--;
+    else if (event.key === 'ArrowDown') value++;
+    else if (event.key === 'Home') value = 5;
+    else if (event.key === 'End') value = 240;
+    else return;
+    event.preventDefault(); selectInterval(value, true);
+  });
   byId('intervalButton').addEventListener('click', function () {
     if (!serverReady) return;
     byId('intervalError').textContent = '';
-    byId('intervalInput').value = state.intervalHours || '';
     openDialog('intervalDialog');
-    byId('intervalInput').focus();
+    selectInterval(state.intervalHours ? Math.round(state.intervalHours * 10) : 5, true);
+    intervalWheel.focus();
   });
   var closeButtons = document.querySelectorAll('[data-close]');
   for (var c = 0; c < closeButtons.length; c++) {
@@ -456,7 +504,7 @@
     var hours = Number(byId('intervalInput').value);
     var tenths = Math.round(hours * 10);
     if (!isFinite(hours) || hours < 0.5 || hours > 24 || Math.abs(hours * 10 - tenths) > 1e-8) {
-      byId('intervalError').textContent = '请输入 0.5 至 24 小时，可填 3.1 这样的数值。';
+      byId('intervalError').textContent = '请选择0小时30分钟至24小时0分钟，每档6分钟。';
       return;
     }
     hours = tenths / 10;

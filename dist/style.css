@@ -118,3 +118,8 @@ html.night{color:#edf3e8;background:#0e1714}
 .night .amount-option{color:#9badb9}
 .night .amount-wheel-highlight{border-color:#557894;background:#86bdf216}
 .night .amount-wheel:focus{outline-color:#557894}
+
+#intervalDialog .amount-wheel-frame{width:280px;max-width:100%}
+#intervalValue{font-size:36px}
+#intervalDialog label{font-size:20px}
+#intervalDialog .submit-button{font-size:22px}

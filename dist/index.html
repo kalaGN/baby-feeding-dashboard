@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=29">
+  <link rel="stylesheet" href="./style.css?v=30">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -89,7 +89,13 @@
     <form id="intervalForm" method="dialog">
       <div class="dialog-heading"><div><span class="eyebrow">看板设置</span><h2>两次喝奶间隔</h2></div><button class="close-button" type="button" data-close="intervalDialog" aria-label="关闭">×</button></div>
       <p class="dialog-copy">到预计时间会自动添加一条记录，奶量沿用上一笔；没有上一笔时记 120 ml。</p>
-      <label for="intervalInput">间隔 <span>小时</span></label><input id="intervalInput" name="interval" type="number" min="0.5" max="24" step="0.1" inputmode="decimal" placeholder="例如 3.1">
+      <label for="intervalWheel">间隔</label>
+      <div class="amount-readout"><output id="intervalValue">0小时30分钟</output></div>
+      <input id="intervalInput" name="interval" type="hidden">
+      <div class="amount-wheel-frame">
+        <div class="amount-wheel-highlight" aria-hidden="true"></div>
+        <div id="intervalWheel" class="amount-wheel" role="listbox" tabindex="0" aria-label="间隔，上下滚动选择0小时30分钟至24小时0分钟，每档6分钟"></div>
+      </div>
       <p class="form-error" id="intervalError" role="alert"></p>
       <button class="submit-button" type="submit">保存间隔</button>
     </form>
@@ -109,6 +115,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=29"></script>
+  <script src="./app.js?v=30"></script>
 </body>
 </html>
