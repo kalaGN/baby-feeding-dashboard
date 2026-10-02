@@ -102,3 +102,21 @@ html.night{color:#edf3e8;background:#0e1714}
 #feedDialog select:focus{outline:3px solid #d7e9d4;border-color:#80ab85}
 .night #feedDialog select{background:#27392e;border-color:#55715c;color:#f2f5e9}
 @media(max-width:420px){.feed-date-time{grid-template-columns:1fr 1fr}.feed-time-field{grid-column:1 / -1}}
+
+/* Milk amount is selected by sliding, with a large live value. */
+.amount-readout{display:flex;align-items:baseline;justify-content:center;gap:8px;color:#438edb}
+.amount-readout output{font-size:48px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.amount-readout span{font-size:22px}
+#feedDialog .amount-slider{width:100%;height:64px;padding:0;border:0;border-radius:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+#feedDialog .amount-slider::-webkit-slider-runnable-track{height:10px;border-radius:6px;background:#b7d5ef}
+#feedDialog .amount-slider::-webkit-slider-thumb{-webkit-appearance:none;width:36px;height:36px;margin-top:-13px;border:4px solid #fffdfa;border-radius:50%;background:#438edb;box-shadow:0 2px 6px #23578b44}
+#feedDialog .amount-slider::-moz-range-track{height:10px;border-radius:6px;background:#b7d5ef}
+#feedDialog .amount-slider::-moz-range-thumb{width:28px;height:28px;border:4px solid #fffdfa;border-radius:50%;background:#438edb}
+.amount-scale{display:flex;justify-content:space-between;margin-top:-8px;color:#748277;font-size:16px}
+.night .amount-readout{color:#86bdf2}
+.night .amount-scale{color:#b2c8b6}
+.night #feedDialog .amount-slider{background:transparent}
+.night #feedDialog .amount-slider::-webkit-slider-runnable-track{background:#415a70}
+.night #feedDialog .amount-slider::-webkit-slider-thumb{border-color:#1c2924;background:#86bdf2}
+.night #feedDialog .amount-slider::-moz-range-track{background:#415a70}
+.night #feedDialog .amount-slider::-moz-range-thumb{border-color:#1c2924;background:#86bdf2}

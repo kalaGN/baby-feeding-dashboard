@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=27">
+  <link rel="stylesheet" href="./style.css?v=28">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -68,7 +68,10 @@
   <dialog id="feedDialog" class="dialog" aria-label="喝奶记录">
     <form id="feedForm" method="dialog">
       <div class="dialog-heading"><span class="eyebrow" id="feedDialogEyebrow">添加记录</span><button class="close-button" type="button" data-close="feedDialog" aria-label="关闭">×</button></div>
-      <label for="amountInput">奶量 <span>ml</span></label><input id="amountInput" name="amount" type="number" min="1" max="2000" step="1" inputmode="numeric" placeholder="输入奶量" required>
+      <label for="amountInput">奶量</label>
+      <div class="amount-readout"><output id="amountValue" for="amountInput">120</output><span>ml</span></div>
+      <input id="amountInput" class="amount-slider" name="amount" type="range" min="10" max="300" step="10" value="120" aria-label="奶量，10至300毫升，每档10毫升">
+      <div class="amount-scale" aria-hidden="true"><span>10 ml</span><span>300 ml</span></div>
       <div class="feed-date-time">
         <div><label for="monthInput">月份</label><select id="monthInput" name="month" required></select></div>
         <div><label for="dayInput">日期</label><select id="dayInput" name="day" required></select></div>
@@ -103,6 +106,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=27"></script>
+  <script src="./app.js?v=28"></script>
 </body>
 </html>

@@ -62,7 +62,7 @@ cp signing.properties.example signing.properties
 
 在 `signing.properties` 中填写密码后打包。更新必须使用同一密钥并增加 `versionCode`，才能覆盖安装。密钥、密码和构建产物不提交到 GitHub。
 
-将发布包放到项目根目录的 `artifacts/baby-feeding-dashboard-1.1.3.apk`，电脑服务即可提供 `/downloads/baby-feeding-dashboard.apk` 下载。
+将发布包放到项目根目录的 `artifacts/baby-feeding-dashboard-1.1.4.apk`，电脑服务即可提供 `/downloads/baby-feeding-dashboard.apk` 下载。
 
 ## 实现与权限
 

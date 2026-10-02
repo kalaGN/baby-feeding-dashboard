@@ -89,6 +89,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     editFirstEntry() { elements.history.children[0].children[0].listeners.click(); },
     set(id, value) { elements[id].value = String(value); },
     submit(id) { elements[id].listeners.submit({ preventDefault() {} }); },
+    input(id) { elements[id].listeners.input(); },
     reload(time) { return start(this.state(), time); },
   };
 }
@@ -216,4 +217,19 @@ test('独立 APK 无网络接口仍可新增编辑并自动保存', () => {
   app.submit('feedForm');
   assert.equal(app.remote().entries[0].amount,150);
   assert.equal(app.text('runtimeStatus'),'');
+});
+
+
+test('奶量滑块默认120，实时显示并保存10与300边界，拒绝非10ml档位', () => {
+  const seed={intervalHours:null,intervalStartedAt:null,entries:[]};
+  const app=start(seed,at(12));
+  app.click('addButton'); assert.equal(app.text('amountValue'),'120');
+  app.set('amountInput',10); app.input('amountInput'); assert.equal(app.text('amountValue'),'10');
+  app.submit('feedForm'); assert.equal(app.remote().entries[0].amount,10);
+  app.editFirstEntry(); app.set('amountInput',300); app.input('amountInput');
+  assert.equal(app.text('amountValue'),'300'); app.submit('feedForm'); assert.equal(app.remote().entries[0].amount,300);
+  for (const amount of [0,310,115]) {
+    app.click('addButton');app.set('amountInput',amount);app.submit('feedForm');
+    assert.equal(app.remote().entries.length,1);assert.ok(app.text('feedError'));
+  }
 });

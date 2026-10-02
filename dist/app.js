@@ -341,12 +341,20 @@
     else dialog.removeAttribute('open');
   }
 
+  function showSelectedAmount() {
+    var value = Number(byId('amountInput').value);
+    byId('amountValue').textContent = String(value);
+    byId('amountInput').setAttribute('aria-valuetext', value + ' 毫升');
+  }
+  byId('amountInput').addEventListener('input', showSelectedAmount);
+  byId('amountInput').addEventListener('change', showSelectedAmount);
   function openFeedDialog(entry) {
     editingEntryId = entry ? entry.id : null;
     byId('feedForm').reset();
     byId('feedError').textContent = '';
     var date = entry ? new Date(entry.at) : new Date();
-    byId('amountInput').value = entry ? entry.amount : 120;
+    byId('amountInput').value = entry ? Math.max(10, Math.min(300, Math.round(entry.amount / 10) * 10)) : 120;
+    showSelectedAmount();
     byId('monthInput').value = String(date.getMonth() + 1);
     byId('dayInput').value = String(date.getDate());
     byId('timeInput').value = formatTime(date.getTime());
@@ -375,7 +383,7 @@
     if (!serverReady) return;
     var amount = Number(byId('amountInput').value);
     var at = selectedFeedTime();
-    if (amount !== Math.floor(amount) || amount < 1 || amount > 2000 || !isFinite(at) || at > Date.now() + 60000) {
+    if (amount !== Math.floor(amount) || amount < 10 || amount > 300 || amount % 10 !== 0 || !isFinite(at) || at > Date.now() + 60000) {
       byId('feedError').textContent = '请选择有效的月、日、时间和奶量，不能晚于现在。';
       return;
     }
