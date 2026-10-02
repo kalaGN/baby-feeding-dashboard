@@ -18,6 +18,12 @@
 
 *小米 MI PAD 4 实机拍摄；照片经过透视、反光和摩尔纹整理。*
 
+## Android 安装版
+
+提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，默认横屏、全屏并保持屏幕常亮；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
+
+从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
+
 ## 快速开始
 
 ### 环境要求
@@ -55,12 +61,6 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 ```
 
 ## 使用说明
-
-### Android 安装版
-
-提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，默认横屏、全屏并保持屏幕常亮；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
-
-从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
 
 ### 记录喝奶
 
