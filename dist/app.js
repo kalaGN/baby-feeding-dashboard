@@ -13,6 +13,8 @@
   var serverConflict = false;
   var changeSerial = 0;
   var editingEntryId = null;
+  var statsDays = 7;
+  var statsSignature = null;
   var wakeLock = null;
   var AUTO_GRACE_MS = 2 * 60000;
   var weekNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -306,7 +308,64 @@
     card.appendChild(remove);
     return card;
   }
+  function milkStatistics(days, now) {
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var rows = [];
+    var total = 0;
+    for (var d = days - 1; d >= 0; d--) {
+      var start = new Date(today.getFullYear(), today.getMonth(), today.getDate() - d);
+      var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+      var amount = 0;
+      for (var i = 0; i < state.entries.length; i++) {
+        var entry = state.entries[i];
+        if (entry.at >= start.getTime() && entry.at < end.getTime() && entry.at <= now.getTime()) amount += entry.amount;
+      }
+      rows.push({ label: (start.getMonth() + 1) + '/' + start.getDate(), amount: amount });
+      total += amount;
+    }
+    return { rows: rows, total: total, average: Math.round(total / days) };
+  }
+  function renderStatistics() {
+    var result = milkStatistics(statsDays, new Date());
+    var signature = JSON.stringify(result);
+    if (signature === statsSignature) return;
+    statsSignature = signature;
+    byId('stats7Button').setAttribute('aria-pressed', statsDays === 7 ? 'true' : 'false');
+    byId('stats30Button').setAttribute('aria-pressed', statsDays === 30 ? 'true' : 'false');
+    byId('statsTotal').textContent = String(result.total);
+    byId('statsAverage').textContent = String(result.average);
+    byId('statsRange').textContent = result.rows[0].label + ' — ' + result.rows[result.rows.length - 1].label;
+    var chart = byId('statsChart');
+    while (chart.firstChild) chart.removeChild(chart.firstChild);
+    var maximum = 1;
+    for (var i = 0; i < result.rows.length; i++) maximum = Math.max(maximum, result.rows[i].amount);
+    for (var r = 0; r < result.rows.length; r++) {
+      var row = result.rows[r];
+      var column = textElement('div', 'stats-column', '');
+      column.setAttribute('role', 'listitem');
+      column.setAttribute('aria-label', row.label + '，' + row.amount + ' 毫升');
+      column.appendChild(textElement('span', 'stats-bar-value', String(row.amount)));
+      var track = textElement('div', 'stats-bar-track', '');
+      var bar = textElement('div', 'stats-bar', '');
+      bar.style.height = (row.amount / maximum * 100) + '%';
+      track.appendChild(bar); column.appendChild(track);
+      column.appendChild(textElement('span', 'stats-bar-date', row.label));
+      chart.appendChild(column);
+    }
+  }
+  byId('statsButton').addEventListener('click', function () {
+    statsDays = 7; statsSignature = null;
+    renderStatistics(); openDialog('statsDialog');
+    byId('statsChart').scrollLeft = 0;
+  });
+  byId('stats7Button').addEventListener('click', function () {
+    statsDays = 7; statsSignature = null; renderStatistics(); byId('statsChart').scrollLeft = 0;
+  });
+  byId('stats30Button').addEventListener('click', function () {
+    statsDays = 30; statsSignature = null; renderStatistics(); byId('statsChart').scrollLeft = 0;
+  });
   function render() {
+    if (byId('statsDialog').open) renderStatistics();
     var now = new Date();
     var currentTime = now.getTime();
     byId('clock').textContent = formatTime(currentTime);

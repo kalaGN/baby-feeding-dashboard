@@ -128,3 +128,25 @@ html.night{color:#edf3e8;background:#0e1714}
 
 .add-button{width:48px;height:48px;padding:0;display:flex;align-items:center;justify-content:center;flex:none}
 .add-button span{font-size:32px;line-height:1;margin:0;vertical-align:baseline}
+
+.today-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#statsDialog{width:780px;max-width:calc(100vw - 32px);max-height:calc(100vh - 24px);overflow-y:auto}
+.stats-periods{display:flex;gap:12px}
+.stats-periods button{border:0;border-radius:12px;padding:12px 24px;background:#e8eef1;color:#536a79;font-size:22px;font-weight:700}
+.stats-periods button[aria-pressed="true"]{background:#438edb;color:white}
+.stats-summary{display:flex;gap:40px;margin:18px 0}
+.stats-summary>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}
+.stats-summary strong{font-size:38px;color:#438edb;font-variant-numeric:tabular-nums}
+.stats-summary span{font-size:18px}
+.stats-note{font-size:16px;color:#708174;line-height:1.5}
+.stats-chart{display:flex;align-items:flex-end;gap:10px;overflow-x:auto;padding:8px 0 14px}
+.stats-column{min-width:48px;flex:1;text-align:center;display:flex;flex-direction:column;gap:8px}
+.stats-bar-track{height:130px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #bdcdd7}
+.stats-bar{width:28px;background:#438edb;border-radius:6px 6px 0 0}
+.stats-bar-value{font-size:16px;font-weight:700}
+.stats-bar-date{font-size:14px;color:#708174;white-space:nowrap}
+.night .stats-periods button{background:#27392e;color:#cbdce8}
+.night .stats-periods button[aria-pressed="true"]{background:#438edb;color:white}
+.night .stats-summary strong{color:#86bdf2}
+.night .stats-note,.night .stats-bar-date{color:#a0b4a8}
+@media(max-width:600px){.stats-summary{gap:16px}.stats-summary strong{font-size:30px}.stats-summary>div{display:block}.stats-summary span{margin-right:6px}}

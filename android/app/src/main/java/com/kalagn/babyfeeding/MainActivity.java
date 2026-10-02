@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
     private WebResourceResponse blocked() {
         return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
     }
-    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=33"); }
+    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=34"); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
     private void showSettingsMenu() {

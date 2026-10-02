@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=33">
+  <link rel="stylesheet" href="./style.css?v=34">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -47,7 +47,7 @@
           <div class="interval-row"><span>当前间隔</span><button type="button" class="text-button" id="intervalButton"><span id="intervalText">未设置</span><span aria-hidden="true"> ↗</span></button></div>
         </section>
         <section class="today-panel">
-          <div class="eyebrow">今日喝奶</div>
+          <div class="today-heading"><div class="eyebrow">今日喝奶</div><button id="statsButton" class="icon-button" type="button" aria-label="奶量统计"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16V10M12 16V4M17 16V7"/></svg></button></div>
           <div class="today-stats">
             <div><strong id="todayTotal">0</strong><span>ml 累计</span></div>
             <div class="stat-divider"></div>
@@ -64,6 +64,15 @@
     <p id="runtimeStatus" class="runtime-status" role="alert"></p>
     <footer class="footer"><span>记录保存在这台电脑，平板保留同步副本</span><span>为你留住每一次安心的节奏 <span aria-hidden="true">♡</span></span></footer>
   </main>
+
+  <dialog id="statsDialog" class="dialog" aria-label="奶量统计">
+    <div class="dialog-heading"><h2>奶量统计</h2><button class="close-button" type="button" data-close="statsDialog" aria-label="关闭">×</button></div>
+    <div class="stats-periods" role="group" aria-label="统计范围"><button id="stats7Button" type="button" aria-pressed="true">近7天</button><button id="stats30Button" type="button" aria-pressed="false">近30天</button></div>
+    <p id="statsRange" class="stats-note"></p>
+    <div class="stats-summary"><div><span>总奶量</span><strong id="statsTotal">0</strong><span>ml</span></div><div><span>日均奶量</span><strong id="statsAverage">0</strong><span>ml / 天</span></div></div>
+    <p class="stats-note">包含今天；没有记录的日期按0计算，日均奶量按所选7天或30天计算。</p>
+    <div id="statsChart" class="stats-chart" role="list" aria-label="每日奶量"></div>
+  </dialog>
 
   <dialog id="feedDialog" class="dialog" aria-label="喝奶记录">
     <form id="feedForm" method="dialog">
@@ -115,6 +124,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=33"></script>
+  <script src="./app.js?v=34"></script>
 </body>
 </html>

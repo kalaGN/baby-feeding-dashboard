@@ -14,7 +14,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
   if (localSync.revision !== undefined) data['milk-board-server-revision-v1'] = String(localSync.revision);
   const elements = {};
   class Element {
-    constructor() { this.children = []; this.listeners = {}; this.textContent = ''; this.value = ''; this.className = ''; }
+    constructor() { this.children = []; this.listeners = {}; this.textContent = ''; this.value = ''; this.className = ''; this.style = {}; }
     get firstChild() { return this.children[0] || null; }
     appendChild(child) { this.children.push(child); return child; }
     removeChild(child) { this.children.splice(this.children.indexOf(child), 1); return child; }
@@ -269,4 +269,25 @@ test('小时与分钟独立滚动，保留6分钟精度与小时0至12及分钟�
   app.intervalKey('intervalHourWheel', 'Home');
   app.intervalKey('intervalMinuteWheel', 'Home');
   app.submit('intervalForm'); assert.equal(app.state().intervalHours, 0.5);
+});
+
+
+test('近7与30天按本地日期汇总，包含零记录日且排除范围外及未来记录', () => {
+  const now = new Date(2026, 0, 2, 12).getTime();
+  const app = start({intervalHours:null,entries:[
+    {id:'today',at:now,amount:120},
+    {id:'yesterday',at:new Date(2026,0,1,23,59).getTime(),amount:180},
+    {id:'edge',at:new Date(2025,11,27).getTime(),amount:400},
+    {id:'outside7',at:new Date(2025,11,26,23,59).getTime(),amount:300},
+    {id:'outside30',at:new Date(2025,11,3,23,59).getTime(),amount:200},
+    {id:'future',at:now+3600000,amount:100}
+  ]},now);
+  app.click('statsButton');
+  assert.equal(app.text('statsTotal'),'700');
+  assert.equal(app.text('statsAverage'),'100');
+  assert.equal(app.text('statsRange'),'12/27 — 1/2');
+  app.click('stats30Button');
+  assert.equal(app.text('statsTotal'),'1000');
+  assert.equal(app.text('statsAverage'),'33');
+  assert.equal(app.text('statsRange'),'12/4 — 1/2');
 });
