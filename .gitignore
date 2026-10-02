@@ -8,3 +8,7 @@ android/**/build/
 android/local.properties
 android/signing.properties
 android/*.jks
+
+ios/Board/
+ios/build*/
+ios/**/xcuserdata/

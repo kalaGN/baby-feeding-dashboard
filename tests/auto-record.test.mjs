@@ -74,6 +74,11 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
       return JSON.stringify({status:200,body:{initialized:remote.revision > 0,...remote}});
     },
   };
+  if (native === 'ios') {
+    const store = window.AndroidStore;
+    window.IOSStore = { request(method, payload, done) { done(JSON.parse(store.request(method, payload ? JSON.stringify(payload) : ''))); } };
+    delete window.AndroidStore;
+  }
   vm.runInNewContext(source, {
     Date: FakeDate, Math, JSON, Object, String, Number, isFinite,
     document, localStorage, window, navigator: {}, location: { protocol: 'file:' }, XMLHttpRequest: native ? undefined : XMLHttpRequest,
@@ -290,4 +295,17 @@ test('近7与30天按本地日期汇总，包含零记录日且排除范围外�
   assert.equal(app.text('statsTotal'),'1000');
   assert.equal(app.text('statsAverage'),'33');
   assert.equal(app.text('statsRange'),'12/4 — 1/2');
+});
+
+
+test('iPad异步桥接保存新增编辑记录，重启后读取本机数据', () => {
+  const remote = { revision: 0, state: null };
+  const seed = { intervalHours: null, intervalStartedAt: null, entries: [] };
+  const app = start(seed, at(12), remote, {}, 'ios');
+  app.click('addButton'); app.submit('feedForm');
+  assert.equal(remote.state.entries[0].amount, 120);
+  app.editFirstEntry(); app.set('amountInput', 150); app.submit('feedForm');
+  assert.equal(remote.state.entries[0].amount, 150);
+  const restarted = start(seed, at(12), remote, {}, 'ios');
+  assert.equal(restarted.text('todayTotal'), '150');
 });

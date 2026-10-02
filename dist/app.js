@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  var iosStore = window.IOSStore && typeof window.IOSStore.request === 'function' ? window.IOSStore : null;
   var nativeStore = window.AndroidStore && typeof window.AndroidStore.request === 'function' ? window.AndroidStore : null;
   var KEY = 'milk-board-v1';
   var REVISION_KEY = 'milk-board-server-revision-v1';
@@ -81,6 +82,12 @@
     return true;
   }
   function api(method, payload, done) {
+    if (iosStore) {
+      iosStore.request(method, payload || null, function (local) {
+        done(local.status === 200 ? null : (local.body.error || '无法保存到iPad。'), local.body);
+      });
+      return;
+    }
     if (nativeStore) {
       try {
         var local = JSON.parse(nativeStore.request(method, payload ? JSON.stringify(payload) : ''));
@@ -150,11 +157,11 @@
   function connectServer() {
     if (connecting || serverConflict) return;
     connecting = true;
-    byId('runtimeStatus').textContent = nativeStore ? '正在读取平板记录…' : '正在连接服务器…';
+    byId('runtimeStatus').textContent = (nativeStore || iosStore) ? '正在读取平板记录…' : '正在连接服务器…';
     setReady(false);
     api('GET', null, function (error, result) {
       connecting = false;
-      if (error) { byId('runtimeStatus').textContent = nativeStore ? error : '无法连接服务器，现有记录暂存在本机；连接恢复后再编辑。'; return; }
+      if (error) { byId('runtimeStatus').textContent = (nativeStore || iosStore) ? error : '无法连接服务器，现有记录暂存在本机；连接恢复后再编辑。'; return; }
       if (!result.initialized && !pendingSave && !state.entries.length && !state.intervalHours) {
         serverRevision = 0;
         setReady(true);
@@ -683,5 +690,5 @@
   tick();
   setInterval(tick, 30000);
   window.milkBoardReady = true;
-  if (!nativeStore && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').then(null, function () {});
+  if (!nativeStore && !iosStore && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').then(null, function () {});
 }());
