@@ -130,7 +130,7 @@ public class MainActivity extends Activity {
 
     private void loadBoard() {
         errorPanel.setVisibility(View.GONE);
-        webView.loadUrl(server + "/?app=android&v=24");
+        webView.loadUrl(server + "/?app=android&v=25");
     }
 
     private void showServerSettings() {
