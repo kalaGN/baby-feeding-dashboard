@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=31">
+  <link rel="stylesheet" href="./style.css?v=32">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -78,7 +78,8 @@
       <div class="feed-date-time">
         <div><label for="monthInput">月份</label><select id="monthInput" name="month" required></select></div>
         <div><label for="dayInput">日期</label><select id="dayInput" name="day" required></select></div>
-        <div class="feed-time-field"><label for="timeInput">时间</label><input id="timeInput" name="time" type="time" required></div>
+        <div><label for="feedHourInput">小时</label><select id="feedHourInput" name="hour" required></select></div>
+        <div><label for="feedMinuteInput">分钟</label><select id="feedMinuteInput" name="minute" required></select></div>
       </div>
       <p class="form-error" id="feedError" role="alert"></p>
       <button class="submit-button" id="feedSubmitButton" type="submit">保存记录</button>
@@ -114,6 +115,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=31"></script>
+  <script src="./app.js?v=32"></script>
 </body>
 </html>

@@ -239,14 +239,23 @@
   }
   addDateOptions('monthInput', 12, '月');
   addDateOptions('dayInput', 31, '日');
+  function addTimeOptions(id, count) {
+    var select = byId(id);
+    for (var number = 0; number < count; number++) {
+      var option = document.createElement('option');
+      option.value = String(number);
+      option.textContent = pad(number);
+      select.appendChild(option);
+    }
+  }
+  addTimeOptions('feedHourInput', 24);
+  addTimeOptions('feedMinuteInput', 60);
   function selectedFeedTime() {
     var month = Number(byId('monthInput').value);
     var day = Number(byId('dayInput').value);
-    var match = /^(\d{2}):(\d{2})$/.exec(byId('timeInput').value);
-    if (!match || month < 1 || month > 12 || day < 1 || day > 31) return NaN;
-    var hour = Number(match[1]);
-    var minute = Number(match[2]);
-    if (hour > 23 || minute > 59) return NaN;
+    var hour = Number(byId('feedHourInput').value);
+    var minute = Number(byId('feedMinuteInput').value);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || hour !== Math.floor(hour) || minute !== Math.floor(minute)) return NaN;
     var today = new Date();
     var year = today.getFullYear();
     if (editingEntryId) {
@@ -400,7 +409,8 @@
     showSelectedAmount();
     byId('monthInput').value = String(date.getMonth() + 1);
     byId('dayInput').value = String(date.getDate());
-    byId('timeInput').value = formatTime(date.getTime());
+    byId('feedHourInput').value = String(date.getHours());
+    byId('feedMinuteInput').value = String(date.getMinutes());
     byId('feedDialogEyebrow').textContent = entry ? '编辑记录' : '添加记录';
     byId('feedSubmitButton').textContent = entry ? '保存修改' : '保存记录';
     openDialog('feedDialog');

@@ -135,7 +135,7 @@ test('新增记录只选月日时分，跨年可记录前一天且拒绝未来�
   app.set('amountInput', 120);
   app.set('monthInput', 12);
   app.set('dayInput', 31);
-  app.set('timeInput', '23:30');
+  app.set('feedHourInput', '23'); app.set('feedMinuteInput', '30');
   app.submit('feedForm');
   assert.equal(app.state().entries[0].at, new Date(2025, 11, 31, 23, 30).getTime());
 
@@ -143,7 +143,7 @@ test('新增记录只选月日时分，跨年可记录前一天且拒绝未来�
   app.set('amountInput', 120);
   app.set('monthInput', 1);
   app.set('dayInput', 1);
-  app.set('timeInput', '01:00');
+  app.set('feedHourInput', '1'); app.set('feedMinuteInput', '0');
   app.submit('feedForm');
   assert.equal(app.state().entries.length, 1);
   assert.match(app.text('feedError'), /不能晚于现在/);
@@ -155,7 +155,7 @@ test('编辑记录保留原日期与记录 ID', () => {
   app.editFirstEntry();
   assert.equal(app.text('feedDialogEyebrow'), '编辑记录');
   app.set('amountInput', 130);
-  app.set('timeInput', '09:30');
+  app.set('feedHourInput', '9'); app.set('feedMinuteInput', '30');
   app.submit('feedForm');
   assert.equal(app.state().entries.length, 1);
   assert.equal(app.state().entries[0].id, original.id);
