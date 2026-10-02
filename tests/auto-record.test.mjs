@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
 const at = (hour, minute = 0) => new Date(2026, 8, 27, hour, minute).getTime();
 
-function start(seed, initialNow) {
+function start(seed, initialNow, remote = { revision: 0, state: null }) {
   let now = initialNow;
   let intervalTick;
   const data = { 'milk-board-v1': JSON.stringify(seed) };
@@ -36,17 +36,42 @@ function start(seed, initialNow) {
   const localStorage = {
     getItem(key) { return data[key] || null; },
     setItem(key, value) { data[key] = value; },
+    removeItem(key) { delete data[key]; },
   };
+  class XMLHttpRequest {
+    open(method) { this.method = method; }
+    setRequestHeader() {}
+    send(body) {
+      if (this.method === 'GET') {
+        this.status = 200;
+        this.responseText = JSON.stringify({ initialized: remote.revision > 0, revision: remote.revision, state: remote.state });
+      } else {
+        const submitted = JSON.parse(body);
+        if (submitted.revision !== remote.revision) {
+          this.status = 409;
+          this.responseText = JSON.stringify({ revision: remote.revision });
+        } else {
+          remote.revision++;
+          remote.state = submitted.state;
+          this.status = 200;
+          this.responseText = JSON.stringify(remote);
+        }
+      }
+      this.readyState = 4;
+      this.onreadystatechange();
+    }
+  }
   const window = { addEventListener() {} };
   vm.runInNewContext(source, {
     Date: FakeDate, Math, JSON, Object, String, Number, isFinite,
-    document, localStorage, window, navigator: {}, location: { protocol: 'file:' },
+    document, localStorage, window, navigator: {}, location: { protocol: 'file:' }, XMLHttpRequest,
     setInterval(fn) { intervalTick = fn; }, setTimeout() {},
     alert(message) { throw new Error(message); }, confirm() { return true; },
   });
   return {
     tick(time) { now = time; intervalTick(); },
     state() { return JSON.parse(data['milk-board-v1']); },
+    remote() { return remote.state; },
     text(id) { return elements[id].textContent; },
     click(id) { elements[id].listeners.click(); },
     editFirstEntry() { elements.history.children[0].children[0].listeners.click(); },
@@ -134,4 +159,25 @@ test('间隔支持一位小数，3.1 小时得到 3 小时 6 分钟', () => {
   app.submit('intervalForm');
   assert.equal(app.state().intervalHours, 3.1);
   assert.match(app.text('intervalError'), /3.1/);
+});
+
+test('空白浏览器不会抢先初始化服务器，第一笔记录会写入服务器', () => {
+  const remote = { revision: 0, state: null };
+  const app = start({ intervalHours: null, entries: [] }, at(10), remote);
+  assert.equal(remote.revision, 0);
+  app.click('addButton');
+  app.set('amountInput', 120);
+  app.submit('feedForm');
+  assert.equal(remote.revision, 1);
+  assert.equal(app.remote().entries[0].amount, 120);
+});
+
+test('服务器已有记录时优先读取服务器，不用旧浏览器副本覆盖', () => {
+  const remote = {
+    revision: 2,
+    state: { intervalHours: null, intervalStartedAt: null, entries: [{ id: 'server', at: at(9), amount: 140 }] },
+  };
+  const app = start({ intervalHours: null, entries: [{ id: 'stale', at: at(8), amount: 100 }] }, at(10), remote);
+  assert.equal(app.state().entries[0].id, 'server');
+  assert.equal(remote.revision, 2);
 });

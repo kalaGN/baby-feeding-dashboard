@@ -1,7 +1,16 @@
 (function () {
   'use strict';
   var KEY = 'milk-board-v1';
+  var REVISION_KEY = 'milk-board-server-revision-v1';
+  var PENDING_KEY = 'milk-board-server-pending-v1';
   var state = readState();
+  var serverRevision = 0;
+  var pendingSave = false;
+  var serverReady = false;
+  var serverBusy = false;
+  var connecting = false;
+  var serverConflict = false;
+  var changeSerial = 0;
   var editingEntryId = null;
   var wakeLock = null;
   var AUTO_GRACE_MS = 2 * 60000;
@@ -36,18 +45,113 @@
     } catch (error) { /* Browser storage may be disabled. */ }
     return empty;
   }
+  try {
+    serverRevision = Number(localStorage.getItem(REVISION_KEY) || 0);
+    if (!isFinite(serverRevision) || serverRevision < 0) serverRevision = 0;
+    pendingSave = localStorage.getItem(PENDING_KEY) === '1';
+  } catch (error) { /* Connection status is checked below. */ }
+  function cacheState() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+    catch (error) { alert('浏览器无法暂存记录，请检查存储空间或隐私设置。'); return false; }
+  }
   function saveState(silent) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-      return true;
-    } catch (error) {
-      if (!silent) alert('浏览器无法保存记录，请检查存储空间或隐私设置。');
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (error) {
+      if (!silent) alert('浏览器无法暂存记录，请检查存储空间或隐私设置。');
       return false;
     }
+    if (serverReady) {
+      pendingSave = true;
+      changeSerial++;
+      try { localStorage.setItem(PENDING_KEY, '1'); } catch (error) { /* Retry while page stays open. */ }
+      flushState();
+    }
+    return true;
   }
-  if (state.intervalHours && !state.entries.length && !state.intervalStartedAt) {
-    state.intervalStartedAt = nextMinute(Date.now());
-    if (!saveState(true)) state.intervalStartedAt = null;
+  function api(method, payload, done) {
+    if (typeof XMLHttpRequest !== 'function') { done('浏览器不支持连接服务器'); return; }
+    var request = new XMLHttpRequest();
+    request.open(method, './api/state', true);
+    request.timeout = 8000;
+    if (payload) request.setRequestHeader('Content-Type', 'application/json');
+    request.onreadystatechange = function () {
+      if (request.readyState !== 4) return;
+      var result;
+      try { result = JSON.parse(request.responseText); } catch (error) { result = null; }
+      if (request.status >= 200 && request.status < 300 && result) done(null, result);
+      else done(request.status === 409 ? '服务器记录已变化，请保留此页面并检查其他设备。' : '无法连接或保存到服务器，记录暂存在本机。', result);
+    };
+    request.ontimeout = function () { request.onreadystatechange = null; done('连接服务器超时，记录暂存在本机。'); };
+    request.onerror = function () { request.onreadystatechange = null; done('无法连接服务器，记录暂存在本机。'); };
+    request.send(payload ? JSON.stringify(payload) : null);
+  }
+  function setReady(ready) {
+    serverReady = ready;
+    byId('addButton').disabled = !ready;
+    byId('intervalButton').disabled = !ready;
+  }
+  function flushState() {
+    if (!serverReady || serverBusy || serverConflict || !pendingSave) return;
+    serverBusy = true;
+    var serial = changeSerial;
+    api('PUT', { revision: serverRevision, state: state }, function (error, result) {
+      serverBusy = false;
+      if (error) {
+        if (result && result.revision !== undefined) { serverConflict = true; setReady(false); }
+        byId('runtimeStatus').textContent = error;
+        return;
+      }
+      serverRevision = result.revision;
+      try { localStorage.setItem(REVISION_KEY, String(serverRevision)); } catch (ignored) {}
+      if (serial === changeSerial) {
+        pendingSave = false;
+        try { localStorage.removeItem(PENDING_KEY); } catch (ignored) {}
+        byId('runtimeStatus').textContent = '';
+      } else flushState();
+    });
+  }
+  function acceptServer(result) {
+    state = result.state;
+    serverRevision = result.revision;
+    try { localStorage.setItem(REVISION_KEY, String(serverRevision)); } catch (ignored) {}
+    cacheState();
+    setReady(true);
+    byId('runtimeStatus').textContent = '';
+    render();
+  }
+  function connectServer() {
+    if (connecting || serverConflict) return;
+    connecting = true;
+    byId('runtimeStatus').textContent = '正在连接服务器…';
+    setReady(false);
+    api('GET', null, function (error, result) {
+      connecting = false;
+      if (error) { byId('runtimeStatus').textContent = '无法连接服务器，现有记录暂存在本机；连接恢复后再编辑。'; return; }
+      if (!result.initialized && !pendingSave && !state.entries.length && !state.intervalHours) {
+        serverRevision = 0;
+        setReady(true);
+        byId('runtimeStatus').textContent = '';
+        render();
+        return;
+      }
+      if (!result.initialized || pendingSave) {
+        if (result.initialized && result.revision !== serverRevision) {
+          serverConflict = true;
+          byId('runtimeStatus').textContent = '服务器记录已变化，本机未同步记录仍保留。请先备份数据，避免覆盖。';
+          return;
+        }
+        serverRevision = result.revision;
+        pendingSave = true;
+        try { localStorage.setItem(PENDING_KEY, '1'); } catch (ignored) {}
+        setReady(true);
+        if (state.intervalHours && !state.entries.length && !state.intervalStartedAt) {
+          state.intervalStartedAt = nextMinute(Date.now());
+          cacheState();
+        }
+        render();
+        flushState();
+      } else acceptServer(result);
+    });
   }
   function latestEntry(now) {
     var last = null;
@@ -141,11 +245,12 @@
     edit.appendChild(icon);
     edit.appendChild(main);
     edit.appendChild(textElement('span', 'entry-edit-hint', '编辑'));
-    edit.addEventListener('click', function () { openFeedDialog(entry); });
+    edit.addEventListener('click', function () { if (serverReady) openFeedDialog(entry); });
     var remove = textElement('button', 'delete-entry', '×');
     remove.type = 'button';
     remove.setAttribute('aria-label', '删除 ' + formatTime(entry.at) + ' 的 ' + entry.amount + ' 毫升记录');
     remove.addEventListener('click', function () {
+      if (!serverReady) return;
       if (!confirm('删除 ' + formatTime(entry.at) + ' 的 ' + entry.amount + ' ml 记录？')) return;
       var old = state.entries;
       var remaining = [];
@@ -219,9 +324,11 @@
     byId('amountInput').focus();
   }
   byId('addButton').addEventListener('click', function () {
+    if (!serverReady) return;
     openFeedDialog(null);
   });
   byId('intervalButton').addEventListener('click', function () {
+    if (!serverReady) return;
     byId('intervalError').textContent = '';
     byId('intervalInput').value = state.intervalHours || '';
     openDialog('intervalDialog');
@@ -233,6 +340,7 @@
   }
   byId('feedForm').addEventListener('submit', function (event) {
     event.preventDefault();
+    if (!serverReady) return;
     var amount = Number(byId('amountInput').value);
     var at = selectedFeedTime();
     if (amount !== Math.floor(amount) || amount < 1 || amount > 2000 || !isFinite(at) || at > Date.now() + 60000) {
@@ -260,6 +368,7 @@
   });
   byId('intervalForm').addEventListener('submit', function (event) {
     event.preventDefault();
+    if (!serverReady) return;
     var hours = Number(byId('intervalInput').value);
     var tenths = Math.round(hours * 10);
     if (!isFinite(hours) || hours < 0.5 || hours > 24 || Math.abs(hours * 10 - tenths) > 1e-8) {
@@ -333,8 +442,20 @@
 
   function tick() {
     var now = Date.now();
-    autoRecordIfDue(now);
+    if (!serverReady && !serverConflict) connectServer();
+    if (serverReady) autoRecordIfDue(now);
     render();
+    if (serverReady && pendingSave && !serverBusy) flushState();
+    if (serverReady && !pendingSave && !serverBusy) {
+      serverBusy = true;
+      api('GET', null, function (error, result) {
+        serverBusy = false;
+        if (error) { byId('runtimeStatus').textContent = '暂时无法读取服务器，页面显示上次同步的记录。'; return; }
+        if (pendingSave) { flushState(); return; }
+        if (result.revision !== serverRevision) acceptServer(result);
+        else byId('runtimeStatus').textContent = '';
+      });
+    }
   }
   window.addEventListener('storage', function (event) {
     if (event.key === KEY) { state = readState(); tick(); }
