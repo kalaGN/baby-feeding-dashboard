@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
     private static final String ORIGIN = "https://board.local";
     private WebView webView;
     private StateStore store;
+    private AppUpdater updater;
 
     public final class StorageBridge {
         @JavascriptInterface public String request(String method, String payload) {
@@ -36,6 +37,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         store = new StateStore(getFilesDir());
+        updater = new AppUpdater(this);
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(245, 242, 233));
         webView = new WebView(this);
@@ -113,10 +115,11 @@ public class MainActivity extends Activity {
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
     private void showSettingsMenu() {
         new AlertDialog.Builder(this).setTitle("设置")
-            .setItems(new String[]{"关于", "服务地址", "导入旧记录"}, (dialog, item) -> {
+            .setItems(new String[]{"关于", "服务地址", "导入旧记录", "检查更新"}, (dialog, item) -> {
                 if (item == 0) showAbout();
                 if (item == 1) showServerAddress(false);
                 if (item == 2) importServer();
+                if (item == 3) updater.check(true);
             }).setNegativeButton("关闭", null).show();
     }
     private void showAbout() {
@@ -183,7 +186,14 @@ public class MainActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
     @Override public void onWindowFocusChanged(boolean focused) { super.onWindowFocusChanged(focused); if (focused) enterFullscreen(); }
+    @Override protected void onStart() { super.onStart(); updater.foreground(true); updater.check(false); }
+    @Override protected void onStop() { updater.foreground(false); super.onStop(); }
+    @Override protected void onActivityResult(int request, int result, android.content.Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request == AppUpdater.INSTALL_PERMISSION) updater.permissionResult();
+        if (request == AppUpdater.INSTALL_RESULT) updater.installResult();
+    }
     @Override protected void onResume() { super.onResume(); webView.onResume(); webView.resumeTimers(); enterFullscreen(); }
     @Override protected void onPause() { webView.pauseTimers(); webView.onPause(); super.onPause(); }
-    @Override protected void onDestroy() { webView.removeJavascriptInterface("AndroidStore"); webView.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() { updater.close(); webView.removeJavascriptInterface("AndroidStore"); webView.destroy(); super.onDestroy(); }
 }
