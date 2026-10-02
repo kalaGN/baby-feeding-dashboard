@@ -6,10 +6,12 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../dist/app.js', import.meta.url), 'utf8');
 const at = (hour, minute = 0) => new Date(2026, 8, 27, hour, minute).getTime();
 
-function start(seed, initialNow, remote = { revision: 0, state: null }) {
+function start(seed, initialNow, remote = { revision: 0, state: null }, localSync = {}) {
   let now = initialNow;
   let intervalTick;
   const data = { 'milk-board-v1': JSON.stringify(seed) };
+  if (localSync.pending) data['milk-board-server-pending-v1'] = '1';
+  if (localSync.revision !== undefined) data['milk-board-server-revision-v1'] = String(localSync.revision);
   const elements = {};
   class Element {
     constructor() { this.children = []; this.listeners = {}; this.textContent = ''; this.value = ''; this.className = ''; }
@@ -49,7 +51,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }) {
         const submitted = JSON.parse(body);
         if (submitted.revision !== remote.revision) {
           this.status = 409;
-          this.responseText = JSON.stringify({ revision: remote.revision });
+          this.responseText = JSON.stringify({ revision: remote.revision, state: remote.state });
         } else {
           remote.revision++;
           remote.state = submitted.state;
@@ -179,5 +181,14 @@ test('服务器已有记录时优先读取服务器，不用旧浏览器副本�
   };
   const app = start({ intervalHours: null, entries: [{ id: 'stale', at: at(8), amount: 100 }] }, at(10), remote);
   assert.equal(app.state().entries[0].id, 'server');
+  assert.equal(remote.revision, 2);
+});
+
+test('服务器已写入但平板丢失确认时，内容相同可自动恢复同步', () => {
+  const seed = { intervalHours: null, intervalStartedAt: null, entries: [{ id: 'saved', at: at(9), amount: 120 }] };
+  const remote = { revision: 2, state: seed };
+  const app = start(seed, at(10), remote, { revision: 1, pending: true });
+  assert.equal(app.text('runtimeStatus'), '');
+  assert.equal(app.state().entries[0].id, 'saved');
   assert.equal(remote.revision, 2);
 });

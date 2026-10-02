@@ -98,7 +98,7 @@ const server = http.createServer(async (request, response) => {
         }
         await queueWrite(async () => {
           if (body.revision !== stored.revision) {
-            reply(response, 409, { error: '服务器记录已更新', revision: stored.revision });
+            reply(response, 409, { error: '服务器记录已更新', revision: stored.revision, state: stored.state });
             return;
           }
           const next = { revision: stored.revision + 1, state: body.state };

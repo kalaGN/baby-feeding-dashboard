@@ -57,6 +57,7 @@ test('首次导入写入服务器，拒绝旧版本覆盖，重启后仍能读�
       body: JSON.stringify({ revision: 0, state: { ...state, entries: [] } }),
     });
     assert.equal(response.status, 409);
+    assert.deepEqual((await response.json()).state, state);
     const disk = JSON.parse(await readFile(join(dataDir, 'state.json'), 'utf8'));
     assert.deepEqual(disk.state, state);
     await stopServer(server.child);

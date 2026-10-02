@@ -54,6 +54,15 @@
     try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
     catch (error) { alert('浏览器无法暂存记录，请检查存储空间或隐私设置。'); return false; }
   }
+  function sameState(a, b) {
+    if (!b || a.intervalHours !== b.intervalHours || a.intervalStartedAt !== b.intervalStartedAt || a.entries.length !== b.entries.length) return false;
+    var left = a.entries.slice().sort(function (x, y) { return x.id < y.id ? -1 : x.id > y.id ? 1 : 0; });
+    var right = b.entries.slice().sort(function (x, y) { return x.id < y.id ? -1 : x.id > y.id ? 1 : 0; });
+    for (var i = 0; i < left.length; i++) {
+      if (left[i].id !== right[i].id || left[i].at !== right[i].at || left[i].amount !== right[i].amount || !!left[i].auto !== !!right[i].auto) return false;
+    }
+    return true;
+  }
   function saveState(silent) {
     try { localStorage.setItem(KEY, JSON.stringify(state)); }
     catch (error) {
@@ -97,7 +106,16 @@
     api('PUT', { revision: serverRevision, state: state }, function (error, result) {
       serverBusy = false;
       if (error) {
-        if (result && result.revision !== undefined) { serverConflict = true; setReady(false); }
+        if (result && result.revision !== undefined) {
+          if (sameState(state, result.state)) {
+            pendingSave = false;
+            try { localStorage.removeItem(PENDING_KEY); } catch (ignored) {}
+            acceptServer(result);
+            return;
+          }
+          serverConflict = true;
+          setReady(false);
+        }
         byId('runtimeStatus').textContent = error;
         return;
       }
@@ -136,6 +154,12 @@
       }
       if (!result.initialized || pendingSave) {
         if (result.initialized && result.revision !== serverRevision) {
+          if (sameState(state, result.state)) {
+            pendingSave = false;
+            try { localStorage.removeItem(PENDING_KEY); } catch (ignored) {}
+            acceptServer(result);
+            return;
+          }
           serverConflict = true;
           byId('runtimeStatus').textContent = '服务器记录已变化，本机未同步记录仍保留。请先备份数据，避免覆盖。';
           return;
