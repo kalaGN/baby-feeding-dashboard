@@ -415,56 +415,75 @@
     var minutes = Math.round(hours * 60);
     return Math.floor(minutes / 60) + '小时' + (minutes % 60) + '分钟';
   }
-  var intervalWheel = byId('intervalWheel');
-  var intervalOptions = [];
-  var intervalSnapTimer = null;
-  function selectInterval(tenths, scroll) {
-    tenths = Math.max(5, Math.min(240, Math.round(tenths)));
-    var hours = tenths / 10;
-    byId('intervalInput').value = hours;
-    byId('intervalValue').textContent = formatInterval(hours);
-    intervalWheel.setAttribute('aria-activedescendant', 'interval-option-' + tenths);
-    for (var i = 0; i < intervalOptions.length; i++) {
-      var selected = i + 5 === tenths;
-      intervalOptions[i].className = selected ? 'amount-option selected' : 'amount-option';
-      intervalOptions[i].setAttribute('aria-selected', selected ? 'true' : 'false');
+  var intervalHour = 0;
+  var intervalMinute = 30;
+  function createIntervalWheel(id, maximum, step) {
+    var wheel = byId(id);
+    var options = [];
+    var snapTimer = null;
+    function renderValue(value, scroll) {
+      wheel.setAttribute('aria-activedescendant', id + '-' + value);
+      for (var i = 0; i < options.length; i++) {
+        var selected = i * step === value;
+        options[i].className = selected ? 'amount-option selected' : 'amount-option';
+        options[i].setAttribute('aria-selected', selected ? 'true' : 'false');
+      }
+      if (scroll) wheel.scrollTop = value / step * amountRowHeight;
     }
-    if (scroll) intervalWheel.scrollTop = (tenths - 5) * amountRowHeight;
+    function choose(value, scroll) {
+      value = Math.max(0, Math.min(maximum, Math.round(value / step) * step));
+      if (id === 'intervalHourWheel') intervalHour = value;
+      else intervalMinute = value;
+      var previousMinute = intervalMinute;
+      if (intervalHour === 0 && intervalMinute < 30) intervalMinute = 30;
+      byId('intervalInput').value = (intervalHour * 60 + intervalMinute) / 60;
+      byId('intervalValue').textContent = formatInterval(Number(byId('intervalInput').value));
+      hourPicker.render(intervalHour, id === 'intervalHourWheel' && scroll);
+      minutePicker.render(intervalMinute, (id === 'intervalMinuteWheel' && scroll) || previousMinute !== intervalMinute);
+    }
+    for (var choice = 0; choice <= maximum; choice += step) {
+      (function (value) {
+        var option = textElement('div', 'amount-option', String(value));
+        option.id = id + '-' + value;
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-label', value + (id === 'intervalHourWheel' ? ' 小时' : ' 分钟'));
+        option.addEventListener('click', function () { choose(value, true); });
+        wheel.appendChild(option); options.push(option);
+      }(choice));
+    }
+    wheel.addEventListener('scroll', function () {
+      choose(Math.round(wheel.scrollTop / amountRowHeight) * step, false);
+      if (snapTimer !== null) clearTimeout(snapTimer);
+      snapTimer = setTimeout(function () {
+        snapTimer = null;
+        renderValue(id === 'intervalHourWheel' ? intervalHour : intervalMinute, true);
+      }, 120);
+    });
+    wheel.addEventListener('keydown', function (event) {
+      var value = id === 'intervalHourWheel' ? intervalHour : intervalMinute;
+      if (event.key === 'ArrowUp') value -= step;
+      else if (event.key === 'ArrowDown') value += step;
+      else if (event.key === 'Home') value = 0;
+      else if (event.key === 'End') value = maximum;
+      else return;
+      event.preventDefault(); choose(value, true);
+    });
+    return { render: renderValue };
   }
-  for (var intervalChoice = 5; intervalChoice <= 240; intervalChoice++) {
-    (function (tenths) {
-      var option = textElement('div', 'amount-option', formatInterval(tenths / 10));
-      option.id = 'interval-option-' + tenths;
-      option.setAttribute('role', 'option');
-      option.setAttribute('aria-label', formatInterval(tenths / 10));
-      option.addEventListener('click', function () { selectInterval(tenths, true); });
-      intervalWheel.appendChild(option);
-      intervalOptions.push(option);
-    }(intervalChoice));
-  }
-  intervalWheel.addEventListener('scroll', function () {
-    selectInterval(Math.round(intervalWheel.scrollTop / amountRowHeight) + 5, false);
-    if (intervalSnapTimer !== null) clearTimeout(intervalSnapTimer);
-    intervalSnapTimer = setTimeout(function () {
-      intervalSnapTimer = null;
-      selectInterval(Number(byId('intervalInput').value) * 10, true);
-    }, 120);
-  });
-  intervalWheel.addEventListener('keydown', function (event) {
-    var value = Math.round(Number(byId('intervalInput').value) * 10);
-    if (event.key === 'ArrowUp') value--;
-    else if (event.key === 'ArrowDown') value++;
-    else if (event.key === 'Home') value = 5;
-    else if (event.key === 'End') value = 240;
-    else return;
-    event.preventDefault(); selectInterval(value, true);
-  });
+  var hourPicker = createIntervalWheel('intervalHourWheel', 12, 1);
+  var minutePicker = createIntervalWheel('intervalMinuteWheel', 54, 6);
   byId('intervalButton').addEventListener('click', function () {
     if (!serverReady) return;
     byId('intervalError').textContent = '';
+    var minutes = state.intervalHours ? Math.round(state.intervalHours * 60) : 30;
+    intervalHour = Math.min(12, Math.floor(minutes / 60));
+    intervalMinute = minutes % 60;
+    byId('intervalInput').value = (intervalHour * 60 + intervalMinute) / 60;
+    byId('intervalValue').textContent = formatInterval(Number(byId('intervalInput').value));
     openDialog('intervalDialog');
-    selectInterval(state.intervalHours ? Math.round(state.intervalHours * 10) : 5, true);
-    intervalWheel.focus();
+    hourPicker.render(intervalHour, true);
+    minutePicker.render(intervalMinute, true);
+    byId('intervalHourWheel').focus();
   });
   var closeButtons = document.querySelectorAll('[data-close]');
   for (var c = 0; c < closeButtons.length; c++) {
@@ -503,8 +522,8 @@
     if (!serverReady) return;
     var hours = Number(byId('intervalInput').value);
     var tenths = Math.round(hours * 10);
-    if (!isFinite(hours) || hours < 0.5 || hours > 24 || Math.abs(hours * 10 - tenths) > 1e-8) {
-      byId('intervalError').textContent = '请选择0小时30分钟至24小时0分钟，每档6分钟。';
+    if (!isFinite(hours) || hours < 0.5 || hours > 12.9 || Math.abs(hours * 10 - tenths) > 1e-8) {
+      byId('intervalError').textContent = '请选择0小时30分钟至12小时54分钟，每档6分钟。';
       return;
     }
     hours = tenths / 10;

@@ -90,8 +90,8 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     set(id, value) { elements[id].value = String(value); },
     submit(id) { elements[id].listeners.submit({ preventDefault() {} }); },
     input(id) { elements[id].listeners.input(); },
-    scrollInterval(top) { elements.intervalWheel.scrollTop=top;elements.intervalWheel.listeners.scroll(); },
-    intervalKey(key) { elements.intervalWheel.listeners.keydown({key,preventDefault() {}}); },
+    scrollInterval(id, top) { elements[id].scrollTop=top;elements[id].listeners.scroll(); },
+    intervalKey(id, key) { elements[id].listeners.keydown({key,preventDefault() {}}); },
     scrollAmount(top) { elements.amountWheel.scrollTop=top;elements.amountWheel.listeners.scroll(); },
     amountKey(key) { elements.amountWheel.listeners.keydown({key,preventDefault() {}}); },
     reload(time) { return start(this.state(), time); },
@@ -250,19 +250,23 @@ test('上下滚动与上下键按10ml选择，首尾保持10与300', () => {
 });
 
 
-test('间隔滚轮定位现值，按0.1小时滚动，并保存上下边界', () => {
+test('小时与分钟独立滚动，保留6分钟精度与小时0至12及分钟边界', () => {
   const app = start({ intervalHours: 3.1, entries: [] }, at(12));
   app.click('intervalButton');
   assert.equal(app.text('intervalValue'), '3小时6分钟');
-  app.intervalKey('ArrowDown');
-  assert.equal(app.text('intervalValue'), '3小时12分钟');
-  app.scrollInterval(26 * 48);
-  assert.equal(app.text('intervalValue'), '3小时6分钟');
+  app.intervalKey('intervalHourWheel', 'ArrowDown');
+  assert.equal(app.text('intervalValue'), '4小时6分钟');
+  app.intervalKey('intervalMinuteWheel', 'ArrowDown');
+  assert.equal(app.text('intervalValue'), '4小时12分钟');
+  app.scrollInterval('intervalHourWheel', 3 * 48);
+  app.scrollInterval('intervalMinuteWheel', 48);
   app.submit('intervalForm');
   assert.equal(app.state().intervalHours, 3.1);
-  assert.equal(app.text('intervalText'), '3小时6分钟');
-  app.intervalKey('End'); app.intervalKey('ArrowDown');
-  app.submit('intervalForm'); assert.equal(app.state().intervalHours, 24);
-  app.intervalKey('Home'); app.intervalKey('ArrowUp');
+  app.intervalKey('intervalHourWheel', 'End');
+  assert.equal(app.text('intervalValue'), '12小时6分钟');
+  app.intervalKey('intervalMinuteWheel', 'End');
+  app.submit('intervalForm'); assert.equal(app.state().intervalHours, 12.9);
+  app.intervalKey('intervalHourWheel', 'Home');
+  app.intervalKey('intervalMinuteWheel', 'Home');
   app.submit('intervalForm'); assert.equal(app.state().intervalHours, 0.5);
 });
