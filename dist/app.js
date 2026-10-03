@@ -294,7 +294,10 @@
     main.appendChild(textElement('span', '', formatTime(entry.at) + (entry.auto ? ' · 自动' : '')));
     edit.appendChild(icon);
     edit.appendChild(main);
-    edit.appendChild(textElement('span', 'entry-edit-hint', '编辑'));
+    var editHint = textElement('span', 'entry-edit-hint', '');
+    editHint.setAttribute('aria-hidden', 'true');
+    editHint.innerHTML = '<svg viewBox="0 0 24 24"><path d="m16 3 5 5-13 13H3v-5L16 3ZM13 6l5 5"/></svg>';
+    edit.appendChild(editHint);
     edit.addEventListener('click', function () { if (serverReady) openFeedDialog(entry); });
     var remove = textElement('button', 'delete-entry', '×');
     remove.type = 'button';
