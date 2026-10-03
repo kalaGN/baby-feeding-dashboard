@@ -42,15 +42,14 @@ final class AppUpdater {
         android.content.SharedPreferences preferences = activity.getSharedPreferences("dashboard",Activity.MODE_PRIVATE);
         if (!manual && today.equals(preferences.getString("updateCheckDay", ""))) return;
         preferences.edit().putString("updateCheckDay",today).apply();
-        busy = true;
+        busy = true; cancelled = false;
         if (manual) toast("正在检查更新…");
         worker.execute(() -> {
             try {
                 PackageInfo installed = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
-                HttpURLConnection connection = connect(new URL("https://api.github.com/repos/" + ReleaseInfo.REPO + "/releases/latest"));
-                String json;
-                try { json = StateStore.read(connection.getInputStream()); }
-                finally { connection.disconnect(); }
+                String json = UpdateRetry.run(() -> readRelease(), () -> closed,
+                    delay -> UpdateRetry.sleep(delay, () -> closed),
+                    (number, delay) -> { if (manual) retryNotice(number, delay, false); });
                 ReleaseInfo release = ReleaseInfo.parse(json, installed.versionName);
                 ui(() -> {
                     busy = false;
@@ -63,24 +62,85 @@ final class AppUpdater {
                         .setNegativeButton("稍后", null).create();
                     prompt.setOnDismissListener(d -> prompt = null); prompt.show();
                 });
-            } catch (Exception error) { ui(() -> { busy = false; if (manual) toast("检查失败，请检查网络后重试"); }); }
+            } catch (Exception error) { ui(() -> { busy = false; if (manual) failed("检查更新失败", error, () -> check(true)); }); }
         });
+    }
+    private void retryNotice(int number, long delay, boolean downloading) {
+        ui(() -> {
+            if (cancelled) return;
+            String text = "网络异常，" + (delay / 1000) + " 秒后重试（" + number + "/2）";
+            if (downloading && progress != null) progress.setMessage(text);
+            else if (foreground) toast(text);
+        });
+    }
+    private void failed(String title, Exception error, Runnable retry) {
+        if (cancelled || error instanceof UpdateRetry.Cancelled) return;
+        if (!foreground || !(error instanceof UpdateRetry.NetworkFailure)) { toast(title + "：" + error.getMessage()); return; }
+        boolean[] requested = {false};
+        prompt = new AlertDialog.Builder(activity).setTitle(title)
+            .setMessage("网络连接失败，已自动重试 2 次。请检查网络后重试。")
+            .setPositiveButton("重试", (dialog, which) -> requested[0] = true)
+            .setNegativeButton("稍后", null).create();
+        prompt.setOnDismissListener(dialog -> { prompt = null; if (requested[0] && !closed) retry.run(); });
+        prompt.show();
     }
     private HttpURLConnection connect(URL url) throws Exception {
         for (int i = 0; i < 5; i++) {
+            UpdateRetry.check(() -> closed || cancelled);
             String host = url.getHost();
             if (!"https".equals(url.getProtocol()) || !(host.equals("api.github.com") || host.equals("github.com") || host.equals("release-assets.githubusercontent.com") || host.equals("objects.githubusercontent.com"))) throw new IOException("下载地址不受支持");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpURLConnection connection;
+            try { connection = (HttpURLConnection) url.openConnection(); }
+            catch (IOException error) { throw UpdateRetry.network(error); }
             connection.setConnectTimeout(8000); connection.setReadTimeout(15000); connection.setInstanceFollowRedirects(false);
             connection.setRequestProperty("User-Agent", "BabyFeedingDashboard"); connection.setRequestProperty("Accept", "application/vnd.github+json");
-            int status = connection.getResponseCode();
+            int status;
+            try { status = connection.getResponseCode(); }
+            catch (IOException error) { connection.disconnect(); throw UpdateRetry.network(error); }
             if (status == 200) return connection;
+            String location = connection.getHeaderField("Location"); connection.disconnect();
             if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
-                String location = connection.getHeaderField("Location"); connection.disconnect();
                 if (location == null) throw new IOException("缺少下载地址"); url = new URL(url,location);
-            } else { connection.disconnect(); throw new IOException("HTTP " + status); }
+            } else {
+                if (UpdateRetry.transientStatus(status)) throw new UpdateRetry.NetworkFailure("HTTP " + status);
+                throw new IOException("HTTP " + status);
+            }
         }
         throw new IOException("下载跳转过多");
+    }
+    private InputStream stream(HttpURLConnection connection) throws IOException {
+        try { return connection.getInputStream(); } catch (IOException error) { throw UpdateRetry.network(error); }
+    }
+    private int networkRead(InputStream input, byte[] buffer) throws IOException {
+        try { return input.read(buffer); } catch (IOException error) { throw UpdateRetry.network(error); }
+    }
+    private String readRelease() throws Exception {
+        HttpURLConnection connection = connect(new URL("https://api.github.com/repos/" + ReleaseInfo.REPO + "/releases/latest"));
+        try (InputStream in = stream(connection); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096]; int count;
+            while ((count = networkRead(in, buffer)) != -1) {
+                UpdateRetry.check(() -> closed);
+                if (out.size() + count > 1024 * 1024) throw new IOException("发布信息过大");
+                out.write(buffer, 0, count);
+            }
+            int expected = connection.getContentLength();
+            if (expected >= 0 && out.size() != expected) throw new UpdateRetry.NetworkFailure("发布信息下载不完整");
+            return new String(out.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+        } finally { connection.disconnect(); }
+    }
+    private void downloadAttempt(ReleaseInfo release, File temp) throws Exception {
+        ui(() -> { if (!cancelled && progress != null) progress.setMessage("正在下载 " + release.version + "…"); });
+        HttpURLConnection connection = connect(new URL(release.url));
+        try (InputStream in = stream(connection); FileOutputStream out = new FileOutputStream(temp)) {
+            byte[] buffer = new byte[16384]; long count = 0; int length;
+            while ((length = networkRead(in, buffer)) != -1) {
+                UpdateRetry.check(() -> closed || cancelled);
+                count += length; if (count > release.size) throw new IOException("安装包大小异常");
+                out.write(buffer,0,length);
+            }
+            if (count != release.size) throw new UpdateRetry.NetworkFailure("安装包下载不完整");
+            out.getFD().sync();
+        } finally { connection.disconnect(); }
     }
     private void download(ReleaseInfo release) {
         cancelled = false; busy = true;
@@ -90,22 +150,15 @@ final class AppUpdater {
         worker.execute(() -> {
             File temp = new File(activity.getCacheDir(), "update.apk.partial");
             try {
-                HttpURLConnection connection = connect(new URL(release.url));
-                try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
-                    byte[] buffer = new byte[16384]; long count = 0; int length;
-                    while ((length = in.read(buffer)) != -1) {
-                        if (closed || cancelled || Thread.currentThread().isInterrupted()) throw new IOException("下载已取消");
-                        count += length; if (count > release.size) throw new IOException("安装包大小异常");
-                        out.write(buffer,0,length);
-                    }
-                    if (count != release.size) throw new IOException("安装包下载不完整"); out.getFD().sync();
-                } finally { connection.disconnect(); }
+                UpdateRetry.run(() -> { downloadAttempt(release, temp); return null; }, () -> closed || cancelled,
+                    delay -> UpdateRetry.sleep(delay, () -> closed || cancelled),
+                    (number, delay) -> retryNotice(number, delay, true));
                 verify(temp,release);
-                if (closed || cancelled) throw new IOException("下载已取消");
+                UpdateRetry.check(() -> closed || cancelled);
                 if (!temp.renameTo(UpdateApkProvider.apk(activity))) throw new IOException("无法保存安装包");
                 ui(() -> { busy = false; dismissProgress(); downloaded = release; if (foreground) install(); else toast("更新已下载，请在设置中检查更新后安装"); });
             } catch (Exception error) {
-                temp.delete(); ui(() -> { busy = false; dismissProgress(); if (!cancelled) toast("更新失败：" + error.getMessage()); });
+                temp.delete(); ui(() -> { busy = false; dismissProgress(); failed("下载更新失败", error, () -> download(release)); });
             }
         });
     }
