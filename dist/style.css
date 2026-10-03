@@ -198,3 +198,8 @@ html.night{color:#edf3e8;background:#0e1714}
 
 .entry-edit-hint{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex:none}
 .entry-edit-hint svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.entry{min-width:176px;flex:0 0 176px;padding:8px;gap:6px}
+.entry-edit{gap:6px}
+.entry-icon{width:28px;height:28px;flex:none;font-size:17px}
+.entry-edit-hint{width:18px;height:18px}
