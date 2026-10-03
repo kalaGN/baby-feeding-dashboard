@@ -15,13 +15,13 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=37">
+  <link rel="stylesheet" href="./style.css?v=39">
   <title>喝奶看板</title>
 </head>
 <body>
   <main class="board">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>喝奶看板</span></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>喝奶看板</span><button class="icon-button settings-button" id="settingsButton" type="button" aria-label="设置" title="设置" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.6 2.5-2.1 1.2-2.5-.7-2 3.5 1.9 1.8v2.4l-1.9 1.8 2 3.5 2.5-.7 2.1 1.2.6 2.5h4l.6-2.5 2.1-1.2 2.5.7 2-3.5-1.9-1.8v-2.4l1.9-1.8-2-3.5-2.5.7-2.1-1.2L14 3Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
       <div class="top-actions">
         <span class="today-date" id="todayDate"></span>
         <button class="icon-button theme-button" id="themeButton" type="button" aria-label="切换夜间模式" aria-pressed="false" title="切换夜间模式">☾</button>
@@ -124,6 +124,6 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=37"></script>
+  <script src="./app.js?v=39"></script>
 </body>
 </html>

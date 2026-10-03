@@ -203,3 +203,10 @@ html.night{color:#edf3e8;background:#0e1714}
 .entry-edit{gap:6px}
 .entry-icon{width:28px;height:28px;flex:none;font-size:17px}
 .entry-edit-hint{width:18px;height:18px}
+
+/* Record controls: edit above delete on the right. */
+.entry-actions{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none}
+.entry-actions .entry-edit-hint,.entry-actions .delete-entry{display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:0;padding:0;border:0;border-radius:6px;background:transparent;line-height:1}
+.entry-actions button:focus{outline:2px solid #83ae89;outline-offset:1px}
+
+.brand .settings-button{flex:none}

@@ -294,11 +294,15 @@
     main.appendChild(textElement('span', '', formatTime(entry.at) + (entry.auto ? ' · 自动' : '')));
     edit.appendChild(icon);
     edit.appendChild(main);
-    var editHint = textElement('span', 'entry-edit-hint', '');
-    editHint.setAttribute('aria-hidden', 'true');
+    var actions = document.createElement('span');
+    actions.className = 'entry-actions';
+    var editHint = textElement('button', 'entry-edit-hint', '');
+    editHint.type = 'button';
+    editHint.setAttribute('aria-label', '编辑 ' + formatTime(entry.at) + ' 的 ' + entry.amount + ' 毫升记录');
     editHint.innerHTML = '<svg viewBox="0 0 24 24"><path d="m16 3 5 5-13 13H3v-5L16 3ZM13 6l5 5"/></svg>';
-    edit.appendChild(editHint);
-    edit.addEventListener('click', function () { if (serverReady) openFeedDialog(entry); });
+    function editRecord() { if (serverReady) openFeedDialog(entry); }
+    edit.addEventListener('click', editRecord);
+    editHint.addEventListener('click', editRecord);
     var remove = textElement('button', 'delete-entry', '×');
     remove.type = 'button';
     remove.setAttribute('aria-label', '删除 ' + formatTime(entry.at) + ' 的 ' + entry.amount + ' 毫升记录');
@@ -315,7 +319,9 @@
       render();
     });
     card.appendChild(edit);
-    card.appendChild(remove);
+    actions.appendChild(editHint);
+    actions.appendChild(remove);
+    card.appendChild(actions);
     return card;
   }
   function milkStatistics(days, now) {
@@ -624,6 +630,10 @@
     byId('themeButton').setAttribute('aria-pressed', night ? 'true' : 'false');
     byId('themeButton').setAttribute('aria-label', night ? '切换日间模式' : '切换夜间模式');
     byId('themeButton').title = night ? '切换日间模式' : '切换夜间模式';
+  }
+  if (nativeStore && typeof nativeStore.openSettings === 'function') {
+    byId('settingsButton').style.display = 'grid';
+    byId('settingsButton').addEventListener('click', function () { nativeStore.openSettings(); });
   }
   byId('themeButton').addEventListener('click', function () {
     var night = !nightModeEnabled();

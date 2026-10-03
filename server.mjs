@@ -86,10 +86,10 @@ const server = http.createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname;
   if (path === '/downloads/baby-feeding-dashboard.apk' && request.method === 'GET') {
     try {
-      const apk = await readFile(join(base, 'artifacts', 'baby-feeding-dashboard-1.1.12.apk'));
+      const apk = await readFile(join(base, 'artifacts', 'baby-feeding-dashboard-1.1.14.apk'));
       response.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Disposition': 'attachment; filename="baby-feeding-dashboard-1.1.12.apk"',
+        'Content-Disposition': 'attachment; filename="baby-feeding-dashboard-1.1.14.apk"',
         'Content-Length': apk.length,
         'Cache-Control': 'no-cache',
       }).end(apk);

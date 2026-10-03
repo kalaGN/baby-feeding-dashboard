@@ -2,8 +2,6 @@ package com.kalagn.babyfeeding;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.view.Gravity;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.EditText;
@@ -28,6 +26,9 @@ public class MainActivity extends Activity {
     private AppUpdater updater;
 
     public final class StorageBridge {
+        @JavascriptInterface public void openSettings() {
+            runOnUiThread(() -> showSettingsMenu());
+        }
         @JavascriptInterface public String request(String method, String payload) {
             return store.request(method, payload);
         }
@@ -61,23 +62,13 @@ public class MainActivity extends Activity {
                 view.evaluateJavascript("(function(){var b=document.getElementById('fullscreenButton');if(b)b.style.display='none';var f=document.querySelector('.footer span');if(f)f.textContent='记录保存在这台平板，无需电脑或网络';}())", null);
             }
         });
-        ImageButton settingsButton = new ImageButton(this);
-        settingsButton.setImageResource(R.drawable.ic_settings);
-        settingsButton.setContentDescription("设置");
-        settingsButton.setPadding(dp(12), dp(12), dp(12), dp(12));
-        android.util.TypedValue background = new android.util.TypedValue();
-        getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, background, true);
-        settingsButton.setBackgroundResource(background.resourceId);
-        settingsButton.setOnClickListener(v -> showSettingsMenu());
-        FrameLayout.LayoutParams layout = new FrameLayout.LayoutParams(dp(48), dp(48), Gravity.BOTTOM | Gravity.END);
-        layout.setMargins(0, 0, dp(12), dp(8)); root.addView(settingsButton, layout);
         setContentView(root);
         enterFullscreen(); loadBoard();
         android.content.SharedPreferences preferences = getSharedPreferences("dashboard", MODE_PRIVATE);
         if (savedInstanceState == null && preferences.contains("server") && !preferences.getBoolean("migrationPromptShown", false)) {
             preferences.edit().putBoolean("migrationPromptShown", true).apply();
             new AlertDialog.Builder(this).setTitle("导入旧记录？")
-                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后在右下角齿轮菜单中选择“导入旧记录”。")
+                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后在顶部“喝奶看板”右侧的齿轮菜单中选择“导入旧记录”。")
                 .setPositiveButton("读取旧记录", (d, which) -> importServer()).setNegativeButton("暂不导入", null).show();
         }
     }
@@ -110,7 +101,7 @@ public class MainActivity extends Activity {
     private WebResourceResponse blocked() {
         return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
     }
-    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=37"); }
+    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=39"); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
     private void showSettingsMenu() {
