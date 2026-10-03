@@ -24,7 +24,7 @@
 
 ## Android 安装版
 
-提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，手机和平板默认横屏，全屏并保持屏幕常亮；手机横屏使用紧凑布局，弹窗可滚动；日常使用无需电脑服务或网络。旧电脑记录可读取后确认导入，当前不提供通用导入、导出。
+提供 Android 独立安装版，支持 Android 6.0 及以上版本。页面内置于 APK，记录保存在平板，手机和平板默认横屏，全屏并保持屏幕常亮；手机横屏使用紧凑布局，弹窗可滚动；日常使用无需电脑服务或网络。支持导出 CSV 备份、预览后从 CSV 还原，以及读取服务器记录后确认还原。
 
 从 [GitHub Releases](https://github.com/kalaGN/baby-feeding-dashboard/releases/latest) 下载 APK。安装、旧记录迁移及 APK 构建步骤见 [Android 安装版说明](android/README.md)。
 
@@ -101,7 +101,13 @@ PORT=8080 MILK_BOARD_DATA_DIR=/path/to/milk-board-data node server.mjs
 
 默认数据文件为 `data/state.json`，该目录已被 Git 忽略，不会随代码提交到 GitHub。
 
-### 备份与恢复
+### CSV 备份与还原
+
+点击“喝奶看板”右侧齿轮 → **备份与还原**：导出全部历史记录为 UTF-8 CSV 文件；从 CSV 还原时先展示条数、日期范围和覆盖提示，确认后替换全部记录。取消或文件校验失败不会改动记录。CSV 保留记录编号、日期、时间、奶量、自动标记及准确时间戳，不包含间隔或夜间模式设置。
+
+CSV 还原支持本应用导出的文件，限制 1 MB、10000 条记录；请勿手动修改备份。Android 使用系统文件保存/选择器，iPad 使用“文件”，Web 使用浏览器下载/选择文件。Android 的“从服务器还原”内配置服务地址，读取后确认还原。[详细说明](docs/csv-backup.md)。
+
+### 服务器文件备份与恢复
 
 1. 备份：停止服务后，复制 `data/state.json` 到其他位置保存。
 2. 恢复：停止服务，用备份替换数据目录中的 `state.json`，然后重新启动服务。

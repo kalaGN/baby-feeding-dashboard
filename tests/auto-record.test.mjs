@@ -67,6 +67,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
   if (native) window.AndroidStore = {
     request(method, payload) {
       if (method === 'PUT') {
+        if (remote.failWrites) return JSON.stringify({status:500,body:{error:'存储空间不足'}});
         const submitted = JSON.parse(payload);
         if (submitted.revision !== remote.revision) return JSON.stringify({status:409,body:remote});
         remote.state = submitted.state; remote.revision++;
@@ -86,6 +87,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     alert(message) { throw new Error(message); }, confirm() { return true; },
   });
   return {
+    board: window.MilkBoard,
     tick(time) { now = time; intervalTick(); },
     state() { return JSON.parse(data['milk-board-v1']); },
     remote() { return remote.state; },
@@ -308,4 +310,32 @@ test('iPad异步桥接保存新增编辑记录，重启后读取本机数据', (
   assert.equal(remote.state.entries[0].amount, 150);
   const restarted = start(seed, at(12), remote, {}, 'ios');
   assert.equal(restarted.text('todayTotal'), '150');
+});
+
+
+test('还原明确提交后持久保存；取消预览无写入，陈旧版本和存储失败保留原记录', () => {
+  const old = {intervalHours:3,intervalStartedAt:null,entries:[{id:'old',at:at(8),amount:120}]};
+  const next = {...old,entries:[{id:'restored',at:at(9),amount:110,auto:true}]};
+  for (const platform of [true,'ios',false]) {
+    const remote = {revision:1,state:old};
+    const app = start({},at(10),remote,{},platform);
+    const preview = app.board.snapshot();
+    assert.equal(app.remote().entries[0].id,'old');
+    let error;
+    app.board.restore(next,preview.revision+1,e=>error=e);
+    assert.ok(error); assert.equal(app.state().entries[0].id,'old');
+    app.board.restore(next,preview.revision,e=>error=e);
+    assert.equal(error,null); assert.equal(app.state().entries[0].id,'restored');
+    const reopened = start({},at(10),remote,{},platform);
+    assert.equal(reopened.state().entries[0].amount,110);
+  }
+  const remote = {revision:1,state:old,failWrites:true};
+  const app = start({},at(10),remote,{},true);
+  let error;
+  app.board.restore(next,app.board.snapshot().revision,e=>error=e);
+  assert.match(error,/存储空间/); assert.equal(app.state().entries[0].id,'old');
+  // Another device writes after the preview: backend refuses that old revision.
+  remote.failWrites=false; const revision=app.board.snapshot().revision; remote.revision++;
+  app.board.restore(next,revision,e=>error=e);
+  assert.ok(error); assert.equal(app.state().entries[0].id,'old');
 });

@@ -2,9 +2,6 @@ package com.kalagn.babyfeeding;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONObject;
 import java.net.HttpURLConnection;
@@ -24,14 +21,21 @@ public class MainActivity extends Activity {
     private WebView webView;
     private StateStore store;
     private AppUpdater updater;
+    private static final int EXPORT_CSV = 701, IMPORT_CSV = 702;
+    private String pendingCsv;
+    private boolean filePickerOpen;
+
 
     public final class StorageBridge {
-        @JavascriptInterface public void openSettings() {
-            runOnUiThread(() -> showSettingsMenu());
-        }
-        @JavascriptInterface public String request(String method, String payload) {
-            return store.request(method, payload);
-        }
+        @JavascriptInterface public String request(String method, String payload) { return store.request(method, payload); }
+        @JavascriptInterface public String version() { try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+            catch (Exception error) { return "未知"; } }
+        @JavascriptInterface public String serverAddress() { return getSharedPreferences("dashboard", MODE_PRIVATE).getString("server", "http://192.168.0.104:4173"); }
+        @JavascriptInterface public void openSettings() { runOnUiThread(() -> webView.evaluateJavascript("window.MilkSettings&&window.MilkSettings.open()", null)); }
+        @JavascriptInterface public void checkUpdate() { runOnUiThread(() -> updater.check(true)); }
+        @JavascriptInterface public void exportCsv(String csv, String name) { runOnUiThread(() -> createCsv(csv, name)); }
+        @JavascriptInterface public void importCsv() { runOnUiThread(() -> chooseCsv()); }
+        @JavascriptInterface public void readServer(String address) { runOnUiThread(() -> readServerRecords(address)); }
     }
 
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -68,8 +72,8 @@ public class MainActivity extends Activity {
         if (savedInstanceState == null && preferences.contains("server") && !preferences.getBoolean("migrationPromptShown", false)) {
             preferences.edit().putBoolean("migrationPromptShown", true).apply();
             new AlertDialog.Builder(this).setTitle("导入旧记录？")
-                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后在顶部“喝奶看板”右侧的齿轮菜单中选择“导入旧记录”。")
-                .setPositiveButton("读取旧记录", (d, which) -> importServer()).setNegativeButton("暂不导入", null).show();
+                .setMessage("旧记录仍保存在电脑。可先读取并查看条数，确认后导入到这台平板。也可以稍后在顶部“喝奶看板”右侧的设置中选择“备份与还原 → 从服务器还原”。")
+                .setPositiveButton("打开备份与还原", (d, which) -> webView.evaluateJavascript("window.MilkSettings&&window.MilkSettings.open()", null)).setNegativeButton("暂不导入", null).show();
         }
     }
     private boolean internal(Uri uri) {
@@ -82,7 +86,7 @@ public class MainActivity extends Activity {
         switch (file) {
             case "index.html": mime = "text/html"; break;
             case "style.css": mime = "text/css"; break;
-            case "app.js": mime = "application/javascript"; break;
+            case "app.js": case "backup.js": case "settings.js": mime = "application/javascript"; break;
             case "manifest.webmanifest": mime = "application/manifest+json"; break;
             case "icon-192.png": case "icon-512.png": mime = "image/png"; break;
             default: return blocked();
@@ -101,64 +105,65 @@ public class MainActivity extends Activity {
     private WebResourceResponse blocked() {
         return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
     }
-    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=39"); }
-    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+    private void loadBoard() { webView.loadUrl(ORIGIN + "/?app=android&v=40"); }
     private void message(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
-    private void showSettingsMenu() {
-        new AlertDialog.Builder(this).setTitle("设置")
-            .setItems(new String[]{"服务地址", "导入旧记录", "检查更新", "关于"}, (dialog, item) -> {
-                if (item == 0) showServerAddress(false);
-                if (item == 1) importServer();
-                if (item == 2) updater.check(true);
-                if (item == 3) showAbout();
-            }).setNegativeButton("关闭", null).show();
+    private void fileReply(String operation, JSONObject result) {
+        if (!isFinishing()) webView.evaluateJavascript("window.MilkFilesReply&&window.MilkFilesReply(" + JSONObject.quote(operation) + "," + result.toString() + ")", null);
     }
-    private void showAbout() {
-        String version;
-        try { version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-        catch (android.content.pm.PackageManager.NameNotFoundException error) { version = "未知"; }
-        new AlertDialog.Builder(this).setTitle("关于喝奶看板")
-            .setMessage("版本 " + version + "\n\n平板独立版：页面与记录保存在平板，日常使用无需电脑或网络。\n\n支持大字号时钟、喝奶记录、间隔设置、前台自动记录和夜间模式。\n\n开源协议：MIT\nGitHub：kalaGN/baby-feeding-dashboard")
-            .setPositiveButton("知道了", null).show();
+    private void fileError(String operation, String error) {
+        try { fileReply(operation, new JSONObject().put("error", error)); } catch (Exception ignored) { message(error); }
     }
-    private void confirmImport(JSONObject state) throws Exception {
-        int count = state.getJSONArray("entries").length();
-        new AlertDialog.Builder(this).setTitle("确认导入 " + count + " 条旧记录？")
-            .setMessage("记录将保存在这台平板，电脑原记录保留。若平板已有新记录，本次导入会替换它们，请确认后操作。")
-            .setPositiveButton("确认导入", (d, which) -> {
-                try {
-                    store.importState(state);
-                    webView.evaluateJavascript("localStorage.removeItem('milk-board-v1');localStorage.removeItem('milk-board-server-pending-v1');localStorage.removeItem('milk-board-server-revision-v1');", ignored -> { loadBoard(); message("旧记录已导入到平板"); });
-                } catch (Exception error) { message("导入失败，原记录仍保留，请检查存储空间"); }
-            }).setNegativeButton("取消", null).show();
+    private void createCsv(String csv, String name) {
+        if (filePickerOpen) { fileError("export", "请先关闭当前文件选择器"); return; }
+        if (csv == null || csv.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 1024 * 1024) { fileError("export", "备份不能超过 1 MB"); return; }
+        pendingCsv = csv;
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(android.content.Intent.CATEGORY_OPENABLE); intent.setType("text/csv");
+        intent.putExtra(android.content.Intent.EXTRA_TITLE, name.matches("baby-feeding-[0-9-]+\\.csv") ? name : "baby-feeding-backup.csv");
+        try { filePickerOpen = true; startActivityForResult(intent, EXPORT_CSV); }
+        catch (Exception error) { filePickerOpen = false; pendingCsv = null; fileError("export", "无法打开文件保存器"); }
     }
-    private void importServer() { showServerAddress(true); }
-    private void showServerAddress(boolean readAfterSave) {
-        EditText input = new EditText(this); input.setTextSize(22); input.setSingleLine(true);
-        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        input.setText(getSharedPreferences("dashboard", MODE_PRIVATE).getString("server", "http://192.168.0.104:4173"));
-        LinearLayout form = new LinearLayout(this); form.setOrientation(LinearLayout.VERTICAL);
-        form.setPadding(dp(24), dp(12), dp(24), 0);
-        TextView explanation = new TextView(this); explanation.setTextSize(18);
-        explanation.setText("服务地址仅用于读取旧电脑记录，日常离线使用无需连接。");
-        form.addView(explanation); form.addView(input);
-        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("服务地址").setView(form)
-            .setPositiveButton(readAfterSave ? "读取旧记录" : "保存", null).setNegativeButton("取消", null).create();
-        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String address = input.getText().toString().trim().replaceAll("/+$", "");
-            Uri uri = Uri.parse(address);
-            if (!("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) || uri.getHost() == null
-                || uri.getUserInfo() != null || (uri.getPath() != null && !uri.getPath().isEmpty()) || uri.getQuery() != null || uri.getFragment() != null
-                || address.matches(".*\\s.*") || uri.getPort() == 0 || uri.getPort() > 65535) {
-                input.setError("请输入 http:// 或 https:// 服务器地址"); return;
-            }
-            getSharedPreferences("dashboard", MODE_PRIVATE).edit().putString("server", address).apply();
-            dialog.dismiss();
-            if (readAfterSave) readOldRecords(address); else message("服务地址已保存");
-        })); dialog.show();
+    private void chooseCsv() {
+        if (filePickerOpen) { fileError("import", "请先关闭当前文件选择器"); return; }
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(android.content.Intent.CATEGORY_OPENABLE); intent.setType("*/*");
+        intent.putExtra(android.content.Intent.EXTRA_MIME_TYPES, new String[]{"text/csv", "text/comma-separated-values", "text/plain", "application/octet-stream", "application/vnd.ms-excel"});
+        try { filePickerOpen = true; startActivityForResult(intent, IMPORT_CSV); }
+        catch (Exception error) { filePickerOpen = false; fileError("import", "无法打开文件选择器"); }
     }
-    private void readOldRecords(String address) {
-        message("正在读取旧记录…");
+    private void documentResult(int request, int result, android.content.Intent data) {
+        filePickerOpen = false;
+        String operation = request == EXPORT_CSV ? "export" : "import";
+        String csv = pendingCsv; pendingCsv = null;
+        if (result != RESULT_OK || data == null || data.getData() == null) {
+            try { fileReply(operation, new JSONObject().put("cancelled", true)); } catch (Exception ignored) {} return;
+        }
+        Uri uri = data.getData();
+        new Thread(() -> {
+            try {
+                JSONObject reply = new JSONObject();
+                if (request == EXPORT_CSV) {
+                    if (csv == null) throw new IOException("备份已失效，请重试");
+                    try (OutputStream out = getContentResolver().openOutputStream(uri, "wt")) {
+                        if (out == null) throw new IOException("无法保存文件");
+                        out.write(csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                } else {
+                    reply.put("text", StateStore.read(getContentResolver().openInputStream(uri))).put("name", "所选 CSV 文件");
+                }
+                runOnUiThread(() -> fileReply(operation, reply));
+            } catch (Exception error) { runOnUiThread(() -> fileError(operation, "无法读取或保存 CSV，请检查文件及存储空间")); }
+        }, "CsvDocument").start();
+    }
+    private void readServerRecords(String raw) {
+        String address = raw.trim().replaceAll("/+$", "");
+        Uri uri = Uri.parse(address);
+        if (!("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) || uri.getHost() == null
+            || uri.getUserInfo() != null || (uri.getPath() != null && !uri.getPath().isEmpty()) || uri.getQuery() != null || uri.getFragment() != null
+            || address.matches(".*\\s.*") || uri.getPort() == 0 || uri.getPort() > 65535) {
+            fileError("server", "请输入有效的 http:// 或 https:// 服务地址"); return;
+        }
+        getSharedPreferences("dashboard", MODE_PRIVATE).edit().putString("server", address).apply();
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
@@ -166,10 +171,11 @@ public class MainActivity extends Activity {
                 connection.setConnectTimeout(8000); connection.setReadTimeout(8000); connection.setInstanceFollowRedirects(false);
                 if (connection.getResponseCode() != 200) throw new IOException("服务器未返回记录");
                 JSONObject state = StateStore.parseImport(StateStore.read(connection.getInputStream()));
-                runOnUiThread(() -> { if (!isFinishing()) try { confirmImport(state); } catch (Exception error) { message("记录格式无效"); } });
-            } catch (Exception error) { runOnUiThread(() -> { if (!isFinishing()) message("无法读取旧电脑记录，请确认地址和 Wi-Fi"); }); }
+                JSONObject reply = new JSONObject().put("state", state);
+                runOnUiThread(() -> fileReply("server", reply));
+            } catch (Exception error) { runOnUiThread(() -> fileError("server", "无法读取服务器记录，请确认服务地址和 Wi-Fi")); }
             finally { if (connection != null) connection.disconnect(); }
-        }, "ImportRecords").start();
+        }, "ReadServerBackup").start();
     }
     private void enterFullscreen() {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN
@@ -181,6 +187,7 @@ public class MainActivity extends Activity {
     @Override protected void onStop() { updater.foreground(false); super.onStop(); }
     @Override protected void onActivityResult(int request, int result, android.content.Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == EXPORT_CSV || request == IMPORT_CSV) documentResult(request, result, data);
         if (request == AppUpdater.INSTALL_PERMISSION) updater.permissionResult();
         if (request == AppUpdater.INSTALL_RESULT) updater.installResult();
     }

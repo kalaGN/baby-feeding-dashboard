@@ -12,6 +12,8 @@ const files = new Map([
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/backup.js', ['backup.js', 'text/javascript; charset=utf-8']],
+  ['/settings.js', ['settings.js', 'text/javascript; charset=utf-8']],
   ['/sw.js', ['sw.js', 'text/javascript; charset=utf-8']],
   ['/manifest.webmanifest', ['manifest.webmanifest', 'application/manifest+json']],
   ['/icon.svg', ['icon.svg', 'image/svg+xml']],
@@ -86,10 +88,10 @@ const server = http.createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname;
   if (path === '/downloads/baby-feeding-dashboard.apk' && request.method === 'GET') {
     try {
-      const apk = await readFile(join(base, 'artifacts', 'baby-feeding-dashboard-1.1.14.apk'));
+      const apk = await readFile(join(base, 'artifacts', 'baby-feeding-dashboard-1.1.15.apk'));
       response.writeHead(200, {
         'Content-Type': 'application/vnd.android.package-archive',
-        'Content-Disposition': 'attachment; filename="baby-feeding-dashboard-1.1.14.apk"',
+        'Content-Disposition': 'attachment; filename="baby-feeding-dashboard-1.1.15.apk"',
         'Content-Length': apk.length,
         'Cache-Control': 'no-cache',
       }).end(apk);

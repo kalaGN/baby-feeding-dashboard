@@ -15,13 +15,13 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=39">
+  <link rel="stylesheet" href="./style.css?v=40">
   <title>喝奶看板</title>
 </head>
 <body>
   <main class="board">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>喝奶看板</span><button class="icon-button settings-button" id="settingsButton" type="button" aria-label="设置" title="设置" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.6 2.5-2.1 1.2-2.5-.7-2 3.5 1.9 1.8v2.4l-1.9 1.8 2 3.5 2.5-.7 2.1 1.2.6 2.5h4l.6-2.5 2.1-1.2 2.5.7 2-3.5-1.9-1.8v-2.4l1.9-1.8-2-3.5-2.5.7-2.1-1.2L14 3Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>喝奶看板</span><button class="icon-button settings-button" id="settingsButton" type="button" aria-label="设置" title="设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.6 2.5-2.1 1.2-2.5-.7-2 3.5 1.9 1.8v2.4l-1.9 1.8 2 3.5 2.5-.7 2.1 1.2.6 2.5h4l.6-2.5 2.1-1.2 2.5.7 2-3.5-1.9-1.8v-2.4l1.9-1.8-2-3.5-2.5.7-2.1-1.2L14 3Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
       <div class="top-actions">
         <span class="today-date" id="todayDate"></span>
         <button class="icon-button theme-button" id="themeButton" type="button" aria-label="切换夜间模式" aria-pressed="false" title="切换夜间模式">☾</button>
@@ -64,6 +64,39 @@
     <p id="runtimeStatus" class="runtime-status" role="alert"></p>
     <footer class="footer"><span>记录保存在这台电脑，平板保留同步副本</span><span>为你留住每一次安心的节奏 <span aria-hidden="true">♡</span></span></footer>
   </main>
+
+  <dialog id="settingsDialog" class="dialog settings-dialog" aria-label="设置">
+    <div class="settings-header"><button id="settingsBack" class="icon-button" type="button" aria-label="返回设置" hidden>‹</button><h2 id="settingsTitle">设置</h2><button id="settingsClose" class="close-button" type="button" aria-label="关闭设置">×</button></div>
+    <div id="settingsHome" class="settings-view">
+      <button id="backupMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">⇅</span><span class="settings-card-copy"><strong>备份与还原</strong><small>导出 CSV，或从备份恢复记录</small></span><span aria-hidden="true">›</span></button>
+      <button id="updateMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">↻</span><span class="settings-card-copy"><strong>检查更新</strong><small id="settingsVersion">当前版本</small></span><span aria-hidden="true">›</span></button>
+      <button id="aboutMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">ⓘ</span><span class="settings-card-copy"><strong>关于</strong><small>喝奶看板 · MIT 开源协议</small></span><span aria-hidden="true">›</span></button>
+    </div>
+    <div id="settingsBackup" class="settings-view" hidden>
+      <p class="settings-note">手动备份全部历史记录，还原前先预览并确认。</p>
+      <button id="exportCsv" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">↑</span><span class="settings-card-copy"><strong>导出 CSV</strong><small>保存到文件，可用 Excel 打开</small></span><span aria-hidden="true">›</span></button>
+      <button id="importCsv" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">↓</span><span class="settings-card-copy"><strong>从 CSV 还原</strong><small>选择本应用导出的备份文件</small></span><span aria-hidden="true">›</span></button>
+      <button id="serverRestoreMenu" class="settings-card" type="button" hidden><span class="settings-icon" aria-hidden="true">⇩</span><span class="settings-card-copy"><strong>从服务器还原</strong><small>读取电脑记录，确认后保存到本机</small></span><span aria-hidden="true">›</span></button>
+      <p class="settings-notice">CSV 只备份喝奶记录，还原时沿用当前喝奶间隔。</p>
+      <input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+    </div>
+    <div id="settingsServer" class="settings-view" hidden>
+      <p class="settings-note">服务地址仅用于读取记录，日常离线使用无需连接。</p>
+      <label for="backupServer">服务地址</label><input id="backupServer" type="url" placeholder="http://192.168.0.104:4173" autocomplete="off">
+      <button id="readServerBackup" class="settings-primary" type="button">读取记录</button>
+    </div>
+    <div id="settingsPreview" class="settings-view" hidden>
+      <p class="settings-note" id="backupSource"></p><div class="backup-count"><strong id="backupCount">0</strong><span>条记录</span></div><p id="backupRange" class="settings-note"></p>
+      <p id="backupReplace" class="settings-notice"></p>
+      <button id="confirmRestore" class="settings-primary" type="button">确认还原</button><button id="cancelRestore" class="settings-secondary" type="button">取消</button>
+    </div>
+    <div id="settingsAbout" class="settings-view" hidden>
+      <div class="about-app"><img src="./icon-192.png" alt="蓝色奶嘴应用图标"><h3>喝奶看板</h3><p id="aboutVersion"></p></div>
+      <p class="settings-note">为平板横屏桌面设计。大字号时钟、喝奶记录、奶量统计与夜间模式。</p><p class="settings-note">开源协议：MIT<br>GitHub：kalaGN/baby-feeding-dashboard</p>
+    </div>
+    <div id="settingsUpdate" class="settings-view" hidden><p class="settings-note" id="updateExplanation"></p><button id="runUpdate" class="settings-primary" type="button" hidden>检查更新</button></div>
+    <p id="settingsStatus" class="settings-status" role="status" aria-live="polite"></p>
+  </dialog>
 
   <dialog id="statsDialog" class="dialog" aria-label="奶量统计">
     <div class="dialog-heading"><h2>奶量统计</h2><button class="close-button" type="button" data-close="statsDialog" aria-label="关闭">×</button></div>
@@ -124,6 +157,8 @@
       }, 2000);
     }());
   </script>
-  <script src="./app.js?v=39"></script>
+  <script src="./backup.js?v=40"></script>
+  <script src="./app.js?v=40"></script>
+  <script src="./settings.js?v=40"></script>
 </body>
 </html>

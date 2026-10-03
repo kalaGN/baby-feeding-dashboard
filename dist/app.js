@@ -14,6 +14,7 @@
   var serverConflict = false;
   var changeSerial = 0;
   var editingEntryId = null;
+  var restoring = false;
   var statsDays = 7;
   var statsSignature = null;
   var wakeLock = null;
@@ -631,10 +632,6 @@
     byId('themeButton').setAttribute('aria-label', night ? '切换日间模式' : '切换夜间模式');
     byId('themeButton').title = night ? '切换日间模式' : '切换夜间模式';
   }
-  if (nativeStore && typeof nativeStore.openSettings === 'function') {
-    byId('settingsButton').style.display = 'grid';
-    byId('settingsButton').addEventListener('click', function () { nativeStore.openSettings(); });
-  }
   byId('themeButton').addEventListener('click', function () {
     var night = !nightModeEnabled();
     applyTheme(night);
@@ -681,6 +678,7 @@
   });
 
   function tick() {
+    if (restoring) return;
     var now = Date.now();
     if (!serverReady && !serverConflict) connectServer();
     if (serverReady) autoRecordIfDue(now);
@@ -702,6 +700,25 @@
   });
   tick();
   setInterval(tick, 30000);
+  window.MilkBoard = {
+    openDialog: openDialog,
+    closeDialog: closeDialog,
+    snapshot: function () {
+      if (!serverReady || pendingSave || serverBusy) throw new Error('记录尚未同步完成，请稍后再试');
+      return { revision: serverRevision, state: JSON.parse(JSON.stringify(state)) };
+    },
+    restore: function (next, expectedRevision, done) {
+      if (!serverReady || pendingSave || serverBusy || expectedRevision !== serverRevision) { done('记录已变化或正在同步，请重新读取预览后再还原'); return; }
+      restoring = true;
+      setReady(false);
+      api('PUT', { revision: expectedRevision, state: next }, function (error, result) {
+        restoring = false;
+        setReady(true);
+        if (!error) acceptServer(result);
+        done(error || null);
+      });
+    }
+  };
   window.milkBoardReady = true;
   if (!nativeStore && !iosStore && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('./sw.js').then(null, function () {});
 }());
