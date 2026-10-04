@@ -34,6 +34,8 @@
 
 发布时使用正式标签（如 v1.2.0），版本格式为三段数字，APK 附件命名 `baby-feeding-dashboard-1.2.0.apk`，提高 versionCode，并使用原签名。Release 附件必须有 GitHub 提供的 SHA-256 digest。
 
+每次上传新版 APK 到 GitHub Release，必须同步上传同一份签名 APK 到 [Gitee 下载仓库](https://gitee.com/AiLbai/baby-feeding-dashboard) 的同版本 Release，Gitee 附件命名为 `baby-feeding-dashboard.apk`，不上传项目源码。核对两边下载链接可用且 APK 的 SHA-256 一致后，才算发布完成。项目发布规则见 [AGENTS.md](../AGENTS.md)。
+
 ## 构建
 
 使用 JDK 17 或兼容版本、Android SDK Platform 35 和 Build Tools 35.0.0。项目使用 Gradle Wrapper 8.12.1 和 Android Gradle Plugin 8.10.1。
