@@ -1,5 +1,7 @@
 # Baby Feeding Dashboard · 喝奶看板
 
+[简体中文](README.md) | [English](README.en.md)
+
 为平板横屏桌面设计的喝奶记录看板。大字号展示当前时间、上次与下次喝奶时间，支持记录管理、自动记录和夜间模式。
 
 采用原生 HTML、CSS、JavaScript 和 Node.js，无第三方运行依赖。网页版记录保存在运行服务的电脑上，平板浏览器保留同步副本；Android 独立版记录保存在平板。
