@@ -120,7 +120,7 @@ final class BoardController: UIViewController, WKScriptMessageHandler, WKUIDeleg
         decisionHandler(navigationAction.request.url?.isFileURL == true ? .allow : .cancel)
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        webView.evaluateJavaScript("document.getElementById('fullscreenButton').style.display='none';document.querySelector('.footer span').textContent='记录保存在这台iPad，无需电脑或网络';", completionHandler: nil)
+        webView.evaluateJavaScript("document.getElementById('fullscreenButton').style.display='none';document.querySelector('.footer span').textContent='记录仅保存到当前设备中';", completionHandler: nil)
     }
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         let alert = UIAlertController(title: "喝奶看板", message: message, preferredStyle: .alert)

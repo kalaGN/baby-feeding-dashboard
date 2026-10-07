@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) { return asset(request.getUrl()); }
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, String url) { return asset(Uri.parse(url)); }
             @Override public void onPageFinished(WebView view, String url) {
-                view.evaluateJavascript("(function(){var b=document.getElementById('fullscreenButton');if(b)b.style.display='none';var f=document.querySelector('.footer span');if(f)f.textContent='记录保存在这台平板，无需电脑或网络';}())", null);
+                view.evaluateJavascript("(function(){var b=document.getElementById('fullscreenButton');if(b)b.style.display='none';var f=document.querySelector('.footer span');if(f)f.textContent='记录仅保存到当前设备中';}())", null);
             }
         });
         setContentView(root);
