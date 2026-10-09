@@ -14,10 +14,10 @@
   }
   function show(name) {
     page = name;
-    var names = ['Home', 'Backup', 'Server', 'Preview', 'About', 'Update'];
+    var names = ['Home', 'Backup', 'Server', 'Preview', 'About', 'Update', 'Privacy'];
     for (var i = 0; i < names.length; i++) el('settings' + names[i]).hidden = names[i] !== name;
     el('settingsBack').hidden = name === 'Home';
-    el('settingsTitle').textContent = { Home: '设置', Backup: '备份与还原', Server: '从服务器还原', Preview: '确认还原', About: '关于', Update: '检查更新' }[name];
+    el('settingsTitle').textContent = { Home: '设置', Backup: '备份与还原', Server: '从服务器还原', Preview: '确认还原', About: '关于', Update: '检查更新', Privacy: '隐私政策' }[name];
     status('');
   }
   function open() { if (busy) return; pending = null; show('Home'); board.openDialog('settingsDialog'); }
@@ -61,8 +61,11 @@
   el('settingsButton').addEventListener('click', open);
   el('settingsClose').addEventListener('click', function () { if (!busy) { pending = null; board.closeDialog('settingsDialog'); } });
   el('settingsDialog').addEventListener('cancel', function (event) { if (busy) event.preventDefault(); else pending = null; });
-  el('settingsBack').addEventListener('click', function () { if (!busy) { pending = null; show(page === 'Home' || page === 'About' || page === 'Update' || page === 'Backup' ? 'Home' : 'Backup'); } });
+  el('settingsBack').addEventListener('click', function () { if (!busy) { pending = null; show(page === 'Home' || page === 'About' || page === 'Privacy' || page === 'Update' || page === 'Backup' ? 'Home' : 'Backup'); } });
   el('backupMenu').addEventListener('click', function () { show('Backup'); });
+  el('privacyMenu').addEventListener('click', function () { show('Privacy'); });
+  el('privacyStorage').textContent = android ? 'Android 安装版的记录保存在本机应用私有目录，页面保留暂存副本；日常记录无需网络，不会上传至开发者服务器。' : ios ? 'iPad 安装版的记录保存在本机，日常记录无需网络。' : '网页版会把喝奶记录同步到你使用的电脑服务器，浏览器保留暂存副本。同一局域网内能访问服务的人可能读取记录，请在可信网络使用。';
+  el('privacyAndroid').hidden = !android;
   el('aboutMenu').addEventListener('click', function () { show('About'); });
   el('updateMenu').addEventListener('click', function () {
     show('Update');

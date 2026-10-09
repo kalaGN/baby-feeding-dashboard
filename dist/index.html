@@ -15,7 +15,7 @@
       }
     } catch (error) { /* Keep the default daytime theme. */ }
   </script>
-  <link rel="stylesheet" href="./style.css?v=41">
+  <link rel="stylesheet" href="./style.css?v=42">
   <title>喝奶看板</title>
 </head>
 <body>
@@ -70,6 +70,7 @@
     <div id="settingsHome" class="settings-view">
       <button id="backupMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">⇅</span><span class="settings-card-copy"><strong>备份与还原</strong><small>导出 CSV，或从备份恢复记录</small></span><span aria-hidden="true">›</span></button>
       <button id="updateMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">↻</span><span class="settings-card-copy"><strong>检查更新</strong><small id="settingsVersion">当前版本</small></span><span aria-hidden="true">›</span></button>
+      <button id="privacyMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">◇</span><span class="settings-card-copy"><strong>隐私政策</strong><small>数据保存、权限与删除方式</small></span><span aria-hidden="true">›</span></button>
       <button id="aboutMenu" class="settings-card" type="button"><span class="settings-icon" aria-hidden="true">ⓘ</span><span class="settings-card-copy"><strong>关于</strong><small>喝奶看板 · MIT 开源协议</small></span><span aria-hidden="true">›</span></button>
     </div>
     <div id="settingsBackup" class="settings-view" hidden>
@@ -93,6 +94,27 @@
     <div id="settingsAbout" class="settings-view" hidden>
       <div class="about-app"><img src="./icon-192.png" alt="蓝色奶嘴应用图标"><h3>喝奶看板</h3><p id="aboutVersion"></p></div>
       <p class="settings-note">为平板横屏桌面设计。大字号时钟、喝奶记录、奶量统计与夜间模式。</p><p class="settings-note">开源协议：MIT<br>GitHub：kalaGN/baby-feeding-dashboard</p>
+    </div>
+    <div id="settingsPrivacy" class="settings-view privacy-policy" hidden>
+      <p class="settings-note">喝奶看板隐私政策<br>更新及生效日期：2026年10月8日<br>开发者：王飞</p>
+      <h3>记录与本地设置</h3>
+      <p>应用处理你输入的喝奶日期、时间、奶量，以及自动记录标记、记录编号、间隔、夜间模式等设置，用于展示、计时、统计和备份。不要求填写宝宝姓名或身份信息。</p>
+      <p id="privacyStorage"></p>
+      <h3>文件备份与还原</h3>
+      <p>导出 CSV 会把喝奶记录写入你选择的文件位置；选择云盘等位置时，文件由对应服务处理。还原时仅读取你选择的备份文件，预览并确认后替换记录。请妥善保管备份，分享文件可能使接收者获知记录。</p>
+      <div id="privacyAndroid" hidden>
+        <h3>联网与系统权限</h3>
+        <p>Android 版使用网络权限检查 GitHub 更新、下载新版安装包，以及在你主动操作时读取指定电脑服务器的记录。更新请求不发送喝奶记录；GitHub 及其下载服务会收到网络通信所需的 IP 地址、请求路径和应用请求标识，更新服务位于境外。启动时每天最多自动检查一次更新，手动检查也会联网。</p>
+        <p>下载后使用安装未知应用权限调用系统安装器；授权及安装由你确认。拒绝该权限不影响记录功能。CSV 使用系统文件选择器，不申请相机、麦克风、定位、通讯录或广泛外部存储权限。</p>
+        <p>从服务器还原仅在你填写地址并点击读取后连接该地址，不修改电脑记录。HTTP 连接不加密，请仅在可信局域网中使用。</p>
+      </div>
+      <h3>第三方服务</h3>
+      <p>应用未集成广告、第三方统计或社交登录 SDK，也不提供账号注册、广告画像或出售记录的功能。系统 WebView、文件选择器及你选择的云盘受各自提供方规则约束。</p>
+      <h3>保存期限与删除</h3>
+      <p>记录持续保留至你主动删除或清除数据。可在记录列表编辑、删除单条记录；Android 用户可在系统应用设置中清除本应用数据或卸载应用，以删除应用内全部记录及设置。此操作无法撤销，请先备份。应用外已导出的 CSV 需在对应文件位置另行删除。网页版服务器副本需由服务管理者处理，清除浏览器数据不会删除服务器记录。</p>
+      <h3>儿童信息与联系</h3>
+      <p>本应用供成年家长和照护者使用，记录可能涉及儿童喂养情况，请由监护人决定录入、备份和分享，不要填写不必要的身份信息。</p>
+      <p>如有隐私问题，可通过 GitHub 项目 kalaGN/baby-feeding-dashboard 的 Issues 联系开发者。Issues 为公开页面，请勿提交真实喝奶记录、儿童信息、身份证或其他私密资料。政策发生变化时，将更新本页面及日期。</p>
     </div>
     <div id="settingsUpdate" class="settings-view" hidden><p class="settings-note" id="updateExplanation"></p><button id="runUpdate" class="settings-primary" type="button" hidden>检查更新</button></div>
     <p id="settingsStatus" class="settings-status" role="status" aria-live="polite"></p>
@@ -157,8 +179,8 @@
       }, 2000);
     }());
   </script>
-  <script src="./backup.js?v=41"></script>
-  <script src="./app.js?v=41"></script>
-  <script src="./settings.js?v=41"></script>
+  <script src="./backup.js?v=42"></script>
+  <script src="./app.js?v=42"></script>
+  <script src="./settings.js?v=42"></script>
 </body>
 </html>
