@@ -133,7 +133,7 @@ test('没有上一笔时使用 120ml，错过很久的时段不补记', () => {
 test('旧数据只有间隔、没有记录时，从首次打开的下一整分钟开始计时', () => {
   const app = start({ intervalHours: 3, entries: [] }, at(10, 0) + 20000);
   assert.equal(app.state().intervalStartedAt, at(10, 1));
-  assert.equal(app.text('nextFeedTime'), '13:01');
+  assert.equal(app.text('nextFeedTime'), '请添加第一次喂奶记录');
 });
 
 test('新增记录只选月日时分，跨年可记录前一天且拒绝未来时间', () => {
@@ -185,15 +185,36 @@ test('间隔支持一位小数，3.1 小时得到 3 小时 6 分钟', () => {
   assert.match(app.text('intervalError'), /每档6分钟/);
 });
 
-test('空白浏览器不会抢先初始化服务器，第一笔记录会写入服务器', () => {
+test('首次启动保存默认3小时间隔，第一笔记录会写入服务器', () => {
   const remote = { revision: 0, state: null };
   const app = start({ intervalHours: null, entries: [] }, at(10), remote);
-  assert.equal(remote.revision, 0);
+  assert.equal(remote.revision, 1);
+  assert.equal(app.state().intervalHours, 3);
+  assert.equal(app.state().intervalStartedAt, at(10));
+  assert.equal(app.text('nextFeedTime'), '请添加第一次喂奶记录');
+  app.tick(at(10, 1));
+  assert.equal(app.text('nextFeedTime'), '请添加第一次喂奶记录');
   app.click('addButton');
   app.set('amountInput', 120);
   app.submit('feedForm');
-  assert.equal(remote.revision, 1);
+  assert.equal(remote.revision, 2);
   assert.equal(app.remote().entries[0].amount, 120);
+  assert.equal(app.text('nextFeedTime'), '13:01');
+});
+
+test('Android和iPad首次启动默认3小时，重启保留已保存的间隔', () => {
+  for (const native of [true, 'ios']) {
+    const remote = {revision:0,state:null};
+    const app = start(undefined, at(10), remote, {}, native);
+    assert.equal(app.remote().intervalHours, 3);
+    assert.equal(app.text('nextFeedTime'), '请添加第一次喂奶记录');
+    app.click('intervalButton');
+    app.set('intervalInput', '3.1');
+    app.submit('intervalForm');
+    const restarted = start(undefined, at(11), remote, {}, native);
+    assert.equal(restarted.state().intervalHours, 3.1);
+    assert.equal(restarted.text('nextFeedTime'), '请添加第一次喂奶记录');
+  }
 });
 
 test('服务器已有记录时优先读取服务器，不用旧浏览器副本覆盖', () => {

@@ -1,0 +1,24 @@
+[Unit]
+Description=Baby Feeding Sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=babysync
+Group=babysync
+WorkingDirectory=/opt/baby-feeding-sync
+EnvironmentFile=/etc/baby-feeding-sync.env
+ExecStart=/opt/baby-feeding-node/bin/node /opt/baby-feeding-sync/main.mjs
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/baby-feeding-sync
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

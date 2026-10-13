@@ -12,3 +12,8 @@ android/*.jks
 ios/Board/
 ios/build*/
 ios/**/xcuserdata/
+
+sync-server/node_modules/
+sync-server/data/
+sync-server/.env
+sync-server/*.p8

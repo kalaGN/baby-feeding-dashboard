@@ -164,11 +164,7 @@
       connecting = false;
       if (error) { byId('runtimeStatus').textContent = (nativeStore || iosStore) ? error : '无法连接服务器，现有记录暂存在本机；连接恢复后再编辑。'; return; }
       if (!result.initialized && !pendingSave && !state.entries.length && !state.intervalHours) {
-        serverRevision = 0;
-        setReady(true);
-        byId('runtimeStatus').textContent = '';
-        render();
-        return;
+        state.intervalHours = 3;
       }
       if (!result.initialized || pendingSave) {
         if (result.initialized && result.revision !== serverRevision) {
@@ -403,7 +399,10 @@
     byId('todayCount').textContent = String(today.length);
     byId('intervalText').textContent = state.intervalHours ? formatInterval(state.intervalHours) : '设置间隔';
 
-    if (!state.intervalHours || (!last && !state.intervalStartedAt)) {
+    byId('nextFeedTime').className = 'next-feed-time' + (!state.entries.length ? ' first-feed-reminder' : '');
+    if (!state.entries.length) {
+      byId('nextFeedTime').textContent = '请添加第一次喂奶记录';
+    } else if (!state.intervalHours || (!last && !state.intervalStartedAt)) {
       byId('nextFeedTime').textContent = '--:--';
     } else {
       var nextAt = nextScheduledAt(last ? last.at : state.intervalStartedAt, currentTime);

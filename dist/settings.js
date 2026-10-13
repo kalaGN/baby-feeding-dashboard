@@ -69,7 +69,7 @@
   el('aboutMenu').addEventListener('click', function () { show('About'); });
   el('updateMenu').addEventListener('click', function () {
     show('Update');
-    el('updateExplanation').textContent = android && android.checkUpdate ? '当前版本 v' + version + '。启动时每天最多自动检查一次，也可以手动检查。' : ios ? 'iPad 安装版通过 Xcode 安装新版，目前不支持应用内自动更新。' : '网页版刷新页面即可获取新版；Android 安装包可从 GitHub Releases 下载。';
+    el('updateExplanation').textContent = android && android.checkUpdate ? '当前版本 v' + version + '。启动时每天最多自动检查一次，也可以手动检查。' : ios ? '通过 App Store 安装的版本请在 App Store 更新；通过 Xcode 安装的版本需重新构建安装。' : '网页版刷新页面即可获取新版；Android 安装包可从 GitHub Releases 下载。';
   });
   el('runUpdate').addEventListener('click', function () { android.checkUpdate(); });
   el('exportCsv').addEventListener('click', function () {

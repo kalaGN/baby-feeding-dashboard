@@ -1,0 +1,12 @@
+SYNC_ORIGIN=https://babysync.codeainews.top
+SYNC_HOST=127.0.0.1
+SYNC_PORT=4180
+SYNC_DATABASE=/var/lib/baby-feeding-sync/state.sqlite
+SYNC_TRUST_PROXY=1
+# 会员配置完成后一次性填齐以下六项，缺失时登录保持禁用。
+# APPLE_TEAM_ID=
+# APPLE_KEY_ID=
+# APPLE_PRIVATE_KEY_FILE=/etc/baby-feeding-sync/apple-private-key.p8
+# APPLE_APP_ID=com.kalagn.babyfeeding.ipad
+# APPLE_SERVICES_ID=
+# SYNC_ENCRYPTION_KEY=  # 32字节随机密钥的Base64，只在服务器生成/保存
