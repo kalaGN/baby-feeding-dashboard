@@ -46,6 +46,9 @@ public class MainActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(245, 242, 233));
         webView = new WebView(this);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         root.addView(webView, new FrameLayout.LayoutParams(-1, -1));
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
