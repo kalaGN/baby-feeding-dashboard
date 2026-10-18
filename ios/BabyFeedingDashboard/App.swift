@@ -20,6 +20,7 @@ final class BoardController: UIViewController, WKScriptMessageHandler, WKUIDeleg
     private var storageError: String?
     private var fileOperation: String?
     private var exportURL: URL?
+    private var themeBridge: ThemeBridge?
 
     override var prefersStatusBarHidden: Bool { true }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .landscape }
@@ -31,16 +32,23 @@ final class BoardController: UIViewController, WKScriptMessageHandler, WKUIDeleg
             store = try StateStore(directory: directory.appendingPathComponent("MilkBoard"))
         } catch { storageError = error.localizedDescription }
         let config = WKWebViewConfiguration()
+        let themeBridge = ThemeBridge(hostView: view)
+        self.themeBridge = themeBridge
+        config.userContentController.add(themeBridge, name: "milkTheme")
         config.userContentController.add(self, name: "milkStore")
         config.userContentController.add(self, name: "milkFiles")
         config.userContentController.addUserScript(WKUserScript(source: """
         (function(){var callbacks={},sequence=0;
         window.IOSStore={request:function(method,payload,done){var id=++sequence;callbacks[id]=done;window.webkit.messageHandlers.milkStore.postMessage({id:id,method:method,payload:payload});}};
+        window.IOSTheme={setNightMode:function(night){window.webkit.messageHandlers.milkTheme.postMessage(!!night);}};
         window.IOSFiles={version:"\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")",exportCsv:function(text,name){window.webkit.messageHandlers.milkFiles.postMessage({operation:"export",text:text,name:name});},importCsv:function(){window.webkit.messageHandlers.milkFiles.postMessage({operation:"import"});}};
         window.milkStoreReply=function(id,result){var done=callbacks[id];delete callbacks[id];if(done)done(result);};
         }());
         """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         webView = WKWebView(frame: .zero, configuration: config)
+        themeBridge.attach(webView)
+        webView.scrollView.bounces = false
+        webView.scrollView.showsVerticalScrollIndicator = false
         webView.uiDelegate = self; webView.navigationDelegate = self
         webView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(webView)

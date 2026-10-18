@@ -624,6 +624,7 @@
     return (' ' + document.documentElement.className + ' ').indexOf(' night ') !== -1;
   }
   function applyTheme(night) {
+    if (window.IOSTheme && typeof window.IOSTheme.setNightMode === 'function') window.IOSTheme.setNightMode(night);
     document.documentElement.className = night ? 'night' : '';
     byId('themeColor').setAttribute('content', night ? '#0e1714' : '#f5f2e9');
     byId('themeButton').textContent = night ? '☀' : '☾';

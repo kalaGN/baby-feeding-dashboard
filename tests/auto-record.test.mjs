@@ -29,7 +29,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     static now() { return now; }
   }
   const document = {
-    documentElement: { className: '' },
+    documentElement: { className: localSync.theme === 'night' ? 'night' : '' },
     getElementById(id) { return elements[id] ||= new Element(); },
     createElement() { return new Element(); },
     querySelectorAll() { return []; },
@@ -64,6 +64,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     }
   }
   const window = { addEventListener() {} };
+  const nativeThemes = [];
   if (native) window.AndroidStore = {
     request(method, payload) {
       if (method === 'PUT') {
@@ -76,6 +77,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     },
   };
   if (native === 'ios') {
+    window.IOSTheme = {setNightMode(night) { nativeThemes.push(night); }};
     const store = window.AndroidStore;
     window.IOSStore = { request(method, payload, done) { done(JSON.parse(store.request(method, payload ? JSON.stringify(payload) : ''))); } };
     delete window.AndroidStore;
@@ -87,6 +89,7 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     alert(message) { throw new Error(message); }, confirm() { return true; },
   });
   return {
+    nativeThemes,
     board: window.MilkBoard,
     tick(time) { now = time; intervalTick(); },
     state() { return JSON.parse(data['milk-board-v1']); },
@@ -104,6 +107,16 @@ function start(seed, initialNow, remote = { revision: 0, state: null }, localSyn
     reload(time) { return start(this.state(), time); },
   };
 }
+
+test('iOS首次加载和切换主题都同步原生背景', () => {
+  const app = start({intervalHours:3,entries:[]}, at(10), {revision:0,state:null}, {}, 'ios');
+  assert.deepEqual(app.nativeThemes, [false]);
+  app.click('themeButton');
+  app.click('themeButton');
+  assert.deepEqual(app.nativeThemes, [false,true,false]);
+  const reopened = start({intervalHours:3,entries:[]}, at(10), {revision:0,state:null}, {theme:'night'}, 'ios');
+  assert.deepEqual(reopened.nativeThemes, [true]);
+});
 
 test('到点按上一笔奶量自动记一笔，刷新和重复计时不重记', () => {
   const app = start({ intervalHours: 3, entries: [{ id: 'manual', at: at(11), amount: 150 }] }, at(13, 59));
