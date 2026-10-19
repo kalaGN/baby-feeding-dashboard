@@ -41,6 +41,7 @@
 ├── ios/
 │   ├── BabyFeedingDashboard/
 │   │   ├── App.swift             # 应用入口、控制器及能力装配
+│   │   ├── SceneDelegate.swift   # Scene 生命周期与原生窗口创建
 │   │   ├── StateStore.swift      # 本机记录及原子写入
 │   │   ├── ThemeBridge.swift     # 网页主题与原生安全区域背景同步
 │   │   ├── AppleSignIn.swift     # 计划：AuthenticationServices 授权
